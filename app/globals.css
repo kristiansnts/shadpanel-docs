@@ -120,3 +120,32 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Fix Nextra mobile menu background */
+.nextra-sidebar-container,
+aside.nextra-sidebar-container,
+aside[class*="sidebar"],
+nav.nextra-sidebar,
+[data-nextra-menu],
+.nextra-menu-container {
+  background-color: var(--background) !important;
+}
+
+/* Navigation container */
+.nextra-nav-container,
+.nextra-nav-container-blur {
+  background-color: var(--background) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* Mobile menu content */
+nav.nextra-sidebar > div,
+.nextra-sidebar > div {
+  background-color: var(--background) !important;
+}
+
+/* Catch all for any nextra components */
+aside,
+nav {
+  background-color: var(--background) !important;
+}
