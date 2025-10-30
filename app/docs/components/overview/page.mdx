@@ -1,0 +1,359 @@
+import { ComponentShowcase } from '@/components/docs/component-showcase'
+
+# Components Overview
+
+ShadPanel includes a comprehensive library of 50+ pre-built, customizable components to build powerful admin panels quickly.
+
+## Component Categories
+
+### 🎨 UI Components
+
+Base components from shadcn/ui, fully configured and ready to use:
+
+<ComponentShowcase />
+
+**Component Categories:**
+- **Form Elements**: Button, Input, Label, Select, Checkbox, Switch, Textarea
+- **Layout**: Card, Separator, Tabs, Sheet, Sidebar
+- **Overlays**: Dialog, Dropdown Menu, Popover, Tooltip
+- **Feedback**: Alert, Badge, Skeleton
+- **Navigation**: Breadcrumb
+- **Data Display**: Calendar, Table
+
+---
+
+### 📝 Form Builder
+
+Declarative form system inspired by Filament PHP, with automatic validation:
+
+**Main Component:**
+- `Form` - Wrapper with state management
+
+**Field Components:**
+- `FormInput` - Text, email, password, number inputs
+- `FormTextarea` - Multi-line text input
+- `FormSelect` - Dropdown selection
+- `FormCheckbox` - Boolean toggle
+- `FormToggle` - Switch toggle
+- `FormTagsInput` - Multi-tag input
+- `FormDatePicker` - Date selection
+- `FormDateTimePicker` - Date and time selection
+- `FormFileUpload` - File upload
+- `FormKeyValue` - Key-value pairs
+- `FormMarkdownEditor` - Markdown editing
+- `FormRichEditor` - Rich text editing
+
+**Layout Components:**
+- `FormGrid` - Responsive grid layout
+- `FormSection` - Section with title and description
+- `FormFieldset` - Grouped fields
+- `FormGroup` - Field grouping
+- `FormTabs` - Tabbed forms
+- `FormPlaceholder` - Empty state placeholder
+
+[Learn More About Forms →](/docs/components/form-builder)
+
+---
+
+### 📊 Data Tables
+
+Powerful data tables with built-in features:
+
+**Main Component:**
+- `Table` - Declarative data table
+
+**Column Types:**
+- `TableTextColumn` - Text display with sorting/filtering
+- `TableImageColumn` - Image display
+- `TableSelectColumn` - Row selection checkboxes
+- `TableActionsColumn` - Row action menu
+
+**Actions:**
+- `TableAction` - Individual row actions
+
+**Built-in Features:**
+- ✅ Sorting (ascending/descending)
+- ✅ Global search
+- ✅ Column filtering
+- ✅ Pagination
+- ✅ Row selection
+- ✅ Bulk actions
+- ✅ Column visibility toggle
+
+[Learn More About Tables →](/docs/components/data-table)
+
+---
+
+## Component Naming Convention
+
+ShadPanel uses **prefixed naming** to avoid conflicts:
+
+### Form Components → `Form*`
+
+All form components are prefixed with `Form`:
+
+```tsx
+import {
+  Form,
+  FormInput,
+  FormSelect,
+  FormSection
+} from '@/components/ui'
+```
+
+**Why?**
+- Prevents conflicts with native HTML elements (`<input>`, `<select>`)
+- Clear distinction from other UI components
+- Better autocomplete and IntelliSense
+
+### Table Components → `Table*`
+
+All table components are prefixed with `Table`:
+
+```tsx
+import {
+  Table,
+  TableTextColumn,
+  TableAction
+} from '@/components/ui'
+```
+
+**Why?**
+- No conflicts with native `<table>` element
+- Consistent with shadcn/ui Table component
+- Clear intent for data table features
+
+---
+
+## Import Patterns
+
+### Centralized Imports
+
+All components can be imported from `@/components/ui`:
+
+```tsx
+import {
+  Button,
+  Card,
+  Form,
+  FormInput,
+  Table,
+  TableTextColumn
+} from '@/components/ui'
+```
+
+### Individual Imports
+
+Or import individually for tree-shaking:
+
+```tsx
+import { Button } from '@/components/ui/button'
+import { Form } from '@/components/ui/form-builder'
+import { Table } from '@/components/ui/data-table'
+```
+
+---
+
+## Component Features
+
+### TypeScript First
+
+All components are fully typed with TypeScript:
+
+```tsx
+import { Form, FormInput } from '@/components/ui'
+
+interface FormData {
+  email: string
+  name: string
+}
+
+export default function MyForm() {
+  return (
+    <Form<FormData>
+      initialValues={{ email: '', name: '' }}
+      onSubmit={(values) => {
+        // values is typed as FormData
+        console.log(values.email, values.name)
+      }}
+    >
+      <FormInput accessor="email" label="Email" />
+      <FormInput accessor="name" label="Name" />
+    </Form>
+  )
+}
+```
+
+### Accessibility
+
+All components follow accessibility best practices:
+
+- ✅ ARIA attributes
+- ✅ Keyboard navigation
+- ✅ Screen reader support
+- ✅ Focus management
+- ✅ Semantic HTML
+
+### Customizable
+
+Components accept className and support customization:
+
+```tsx
+<Button className="bg-blue-500 hover:bg-blue-600">
+  Custom Button
+</Button>
+
+<Form className="max-w-2xl mx-auto">
+  {/* Form fields */}
+</Form>
+```
+
+### Dark Mode Ready
+
+All components support dark mode out of the box:
+
+```tsx
+// Automatically adapts to theme
+<Card className="bg-card text-card-foreground">
+  {/* Content */}
+</Card>
+```
+
+---
+
+## Quick Examples
+
+### Simple Form
+
+```tsx
+import { Form, FormInput, FormSelect } from '@/components/ui'
+import { Button } from '@/components/ui/button'
+
+export default function UserForm() {
+  return (
+    <Form
+      initialValues={{ name: '', role: 'user' }}
+      onSubmit={(values) => console.log(values)}
+    >
+      <FormInput accessor="name" label="Name" required />
+      <FormSelect
+        accessor="role"
+        label="Role"
+        options={[
+          { label: 'User', value: 'user' },
+          { label: 'Admin', value: 'admin' },
+        ]}
+      />
+      <Button type="submit">Submit</Button>
+    </Form>
+  )
+}
+```
+
+### Simple Table
+
+```tsx
+import { Table, TableTextColumn, TableActionsColumn, TableAction } from '@/components/ui'
+import { Edit, Trash } from 'lucide-react'
+
+export default function UsersTable({ users }) {
+  return (
+    <Table data={users}>
+      <TableTextColumn accessor="name" header="Name" sortable />
+      <TableTextColumn accessor="email" header="Email" searchable />
+      <TableActionsColumn>
+        <TableAction icon={Edit} label="Edit" onClick={(row) => {}} />
+        <TableAction icon={Trash} label="Delete" onClick={(row) => {}} />
+      </TableActionsColumn>
+    </Table>
+  )
+}
+```
+
+### UI Components
+
+```tsx
+import { Button } from '@/components/ui/button'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+
+export default function Dashboard() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          Dashboard
+          <Badge className="ml-2">New</Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Button>Get Started</Button>
+      </CardContent>
+    </Card>
+  )
+}
+```
+
+---
+
+## Component Philosophy
+
+### Composition Over Configuration
+
+Components are designed to be composed together:
+
+```tsx
+<Form>
+  <FormSection title="Personal Info">
+    <FormGrid columns={2}>
+      <FormInput accessor="firstName" label="First Name" />
+      <FormInput accessor="lastName" label="Last Name" />
+    </FormGrid>
+  </FormSection>
+</Form>
+```
+
+### Sensible Defaults
+
+Components work with minimal configuration:
+
+```tsx
+// Just data and columns - sorting, filtering, pagination included
+<Table data={users}>
+  <TableTextColumn accessor="name" header="Name" />
+  <TableTextColumn accessor="email" header="Email" />
+</Table>
+```
+
+### Progressive Enhancement
+
+Add features as needed:
+
+```tsx
+// Start simple
+<FormInput accessor="email" label="Email" />
+
+// Add validation
+<FormInput accessor="email" label="Email" required type="email" />
+
+// Add more features
+<FormInput
+  accessor="email"
+  label="Email"
+  required
+  type="email"
+  placeholder="you@example.com"
+  helperText="We'll never share your email"
+  pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+/>
+```
+
+---
+
+## Next Steps
+
+Explore the component library in depth:
+
+- [Form Builder Guide](/docs/components/form-builder) - Build powerful forms
+- [Data Table Guide](/docs/components/data-table) - Create data tables
+- [API Reference](/docs/api-reference/form-api) - Component props and methods

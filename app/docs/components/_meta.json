@@ -1,0 +1,18 @@
+{
+  "page": {
+    "title": "Overview",
+    "type": "page"
+  },
+  "overview": {
+    "title": "Component Library",
+    "type": "page"
+  },
+  "form-builder": {
+    "title": "Form Builder",
+    "type": "page"
+  },
+  "data-table": {
+    "title": "Data Table",
+    "type": "page"
+  }
+}

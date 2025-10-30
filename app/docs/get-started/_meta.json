@@ -1,0 +1,18 @@
+{
+  "page": {
+    "title": "Overview",
+    "type": "page"
+  },
+  "installation": {
+    "title": "Installation",
+    "type": "page"
+  },
+  "quick-start": {
+    "title": "Quick Start",
+    "type": "page"
+  },
+  "project-structure": {
+    "title": "Project Structure",
+    "type": "page"
+  }
+}

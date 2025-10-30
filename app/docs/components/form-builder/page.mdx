@@ -1,0 +1,622 @@
+import { FormDemo } from '@/components/docs/form-demo'
+
+# Form Builder
+
+Build declarative, type-safe forms with automatic validation inspired by Filament PHP.
+
+## Interactive Demo
+
+Try out the form builder below. Fill in the fields and click submit to see the form data:
+
+<div className="my-6">
+  <FormDemo />
+</div>
+
+
+Build declarative, type-safe forms with automatic validation inspired by Filament PHP.
+
+## Introduction
+
+ShadPanel's Form Builder provides a powerful, declarative API for creating forms with:
+
+- ✅ **Declarative API** - Define forms with JSX components
+- ✅ **Automatic Validation** - Built-in validation with error messages
+- ✅ **Type Safety** - Full TypeScript support with generics
+- ✅ **State Management** - Automatic form state handling
+- ✅ **Flexible Layout** - Grid, sections, tabs, and more
+- ✅ **12+ Field Types** - Input, select, textarea, date, file upload, etc.
+- ✅ **Real-time Feedback** - Validation on blur and submit
+- ✅ **Customizable** - Extend with your own fields
+
+## Quick Start
+
+### Basic Form
+
+```tsx
+'use client'
+
+import { Form, FormInput, FormSelect } from '@/components/ui'
+import { Button } from '@/components/ui/button'
+
+export default function UserForm() {
+  return (
+    <Form
+      initialValues={{ name: '', email: '', role: 'user' }}
+      onSubmit={(values) => {
+        console.log(values)
+      }}
+    >
+      <FormInput accessor="name" label="Name" required />
+      <FormInput accessor="email" label="Email" type="email" required />
+      <FormSelect
+        accessor="role"
+        label="Role"
+        options={[
+          { label: 'User', value: 'user' },
+          { label: 'Admin', value: 'admin' },
+        ]}
+      />
+      <Button type="submit">Submit</Button>
+    </Form>
+  )
+}
+```
+
+### With Layout
+
+```tsx
+import { Form, FormInput, FormSection, FormGrid } from '@/components/ui'
+
+export default function ProfileForm() {
+  return (
+    <Form initialValues={{ firstName: '', lastName: '', email: '' }}>
+      <FormSection
+        title="Personal Information"
+        description="Enter your personal details"
+      >
+        <FormGrid columns={2}>
+          <FormInput accessor="firstName" label="First Name" required />
+          <FormInput accessor="lastName" label="Last Name" required />
+        </FormGrid>
+        <FormInput accessor="email" label="Email" type="email" required />
+      </FormSection>
+    </Form>
+  )
+}
+```
+
+## Core Concepts
+
+### Form Component
+
+The `Form` component manages state, validation, and submission:
+
+```tsx
+<Form
+  initialValues={{ email: '', password: '' }}
+  onSubmit={(values) => {
+    // Handle submission
+  }}
+  onChange={(values) => {
+    // Track changes
+  }}
+>
+  {/* Fields */}
+</Form>
+```
+
+**Default Styling:**
+The Form component includes automatic padding (`px-8 pb-8`) and spacing (`space-y-6`).
+
+### Accessor Pattern
+
+Fields use the `accessor` prop to connect to form state:
+
+```tsx
+<FormInput accessor="email" label="Email" />
+```
+
+The accessor must match a key in `initialValues`:
+
+```tsx
+<Form initialValues={{ email: '', name: '' }}>
+  <FormInput accessor="email" label="Email" /> {/* ✓ Valid */}
+  <FormInput accessor="name" label="Name" />   {/* ✓ Valid */}
+  <FormInput accessor="age" label="Age" />     {/* ✗ Invalid */}
+</Form>
+```
+
+### TypeScript Support
+
+Use generics for type safety:
+
+```tsx
+interface FormData {
+  email: string
+  name: string
+  age: number
+}
+
+<Form<FormData>
+  initialValues={{ email: '', name: '', age: 0 }}
+  onSubmit={(values) => {
+    // values is typed as FormData
+    console.log(values.email) // ✓ TypeScript knows this is string
+  }}
+>
+  <FormInput accessor="email" label="Email" />
+  <FormInput accessor="name" label="Name" />
+  <FormInput accessor="age" label="Age" type="number" />
+</Form>
+```
+
+## Field Components
+
+### Text Input
+
+```tsx
+<FormInput
+  accessor="name"
+  label="Full Name"
+  placeholder="John Doe"
+  required
+  helperText="Enter your full legal name"
+/>
+```
+
+**Types:** `text`, `email`, `password`, `number`, `tel`, `url`
+
+### Textarea
+
+```tsx
+<FormTextarea
+  accessor="bio"
+  label="Biography"
+  placeholder="Tell us about yourself..."
+  rows={5}
+  required
+/>
+```
+
+### Select
+
+```tsx
+<FormSelect
+  accessor="country"
+  label="Country"
+  options={[
+    { label: 'United States', value: 'us' },
+    { label: 'Canada', value: 'ca' },
+    { label: 'United Kingdom', value: 'uk' },
+  ]}
+  placeholder="Select a country"
+  required
+/>
+```
+
+### Checkbox
+
+```tsx
+<FormCheckbox
+  accessor="terms"
+  label="I agree to the terms and conditions"
+  required
+/>
+```
+
+### Toggle
+
+```tsx
+<FormToggle
+  accessor="notifications"
+  label="Email Notifications"
+  helperText="Receive email updates"
+/>
+```
+
+### Tags Input
+
+```tsx
+<FormTagsInput
+  accessor="tags"
+  label="Tags"
+  placeholder="Add tags..."
+/>
+```
+
+### Date Picker
+
+```tsx
+<FormDatePicker
+  accessor="birthDate"
+  label="Birth Date"
+  required
+/>
+```
+
+### Date Time Picker
+
+```tsx
+<FormDateTimePicker
+  accessor="appointment"
+  label="Appointment"
+  required
+/>
+```
+
+### File Upload
+
+```tsx
+<FormFileUpload
+  accessor="avatar"
+  label="Profile Picture"
+  accept="image/*"
+  maxSize={5 * 1024 * 1024} // 5MB
+/>
+```
+
+### Key-Value
+
+```tsx
+<FormKeyValue
+  accessor="metadata"
+  label="Metadata"
+  keyPlaceholder="Key"
+  valuePlaceholder="Value"
+/>
+```
+
+### Markdown Editor
+
+```tsx
+<FormMarkdownEditor
+  accessor="content"
+  label="Content"
+  placeholder="Write in markdown..."
+/>
+```
+
+### Rich Text Editor
+
+```tsx
+<FormRichEditor
+  accessor="description"
+  label="Description"
+/>
+```
+
+[View All Fields →](/docs/components/form-builder/fields)
+
+## Layout Components
+
+### FormGrid
+
+Responsive grid layout:
+
+```tsx
+<FormGrid columns={2}>
+  <FormInput accessor="firstName" label="First Name" />
+  <FormInput accessor="lastName" label="Last Name" />
+</FormGrid>
+
+{/* Responsive columns */}
+<FormGrid columns={{ sm: 1, md: 2, lg: 3 }}>
+  <FormInput accessor="field1" label="Field 1" />
+  <FormInput accessor="field2" label="Field 2" />
+  <FormInput accessor="field3" label="Field 3" />
+</FormGrid>
+```
+
+### FormSection
+
+Group fields with title and description:
+
+```tsx
+<FormSection
+  title="Account Information"
+  description="Manage your account settings"
+>
+  <FormInput accessor="email" label="Email" />
+  <FormInput accessor="password" label="Password" type="password" />
+</FormSection>
+```
+
+### FormFieldset
+
+Group related fields:
+
+```tsx
+<FormFieldset legend="Contact Information">
+  <FormInput accessor="email" label="Email" />
+  <FormInput accessor="phone" label="Phone" />
+</FormFieldset>
+```
+
+### FormGroup
+
+Simple field grouping:
+
+```tsx
+<FormGroup>
+  <FormInput accessor="city" label="City" />
+  <FormInput accessor="zip" label="ZIP Code" />
+</FormGroup>
+```
+
+### FormTabs
+
+Organize forms into tabs:
+
+```tsx
+<FormTabs
+  tabs={[
+    {
+      label: 'Profile',
+      content: (
+        <>
+          <FormInput accessor="name" label="Name" />
+          <FormInput accessor="email" label="Email" />
+        </>
+      ),
+    },
+    {
+      label: 'Settings',
+      content: (
+        <>
+          <FormToggle accessor="notifications" label="Notifications" />
+          <FormSelect accessor="language" label="Language" options={[]} />
+        </>
+      ),
+    },
+  ]}
+/>
+```
+
+[View Layout Guide →](/docs/components/form-builder/layout)
+
+## Validation
+
+### Built-in Validation
+
+```tsx
+<FormInput
+  accessor="email"
+  label="Email"
+  required
+  type="email"
+  pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+  minLength={5}
+  maxLength={100}
+/>
+```
+
+**Validation Rules:**
+- `required` - Field is required
+- `type` - HTML5 input types (email, url, number, etc.)
+- `pattern` - Regex pattern
+- `minLength` / `maxLength` - String length
+- `min` / `max` - Number range
+
+### Custom Validation
+
+```tsx
+<FormInput
+  accessor="username"
+  label="Username"
+  required
+  validate={(value) => {
+    if (value.length < 3) {
+      return 'Username must be at least 3 characters'
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(value)) {
+      return 'Username can only contain letters, numbers, and underscores'
+    }
+    return true
+  }}
+/>
+```
+
+### Error Messages
+
+Validation errors display automatically:
+
+```tsx
+// Show error on blur
+<FormInput accessor="email" label="Email" required />
+
+// Custom error message
+<FormInput
+  accessor="email"
+  label="Email"
+  required
+  requiredMessage="Email address is required"
+/>
+```
+
+[View Validation Guide →](/docs/components/form-builder/validation)
+
+## Form Submission
+
+### onSubmit Handler
+
+```tsx
+<Form
+  initialValues={{ email: '', password: '' }}
+  onSubmit={async (values) => {
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        body: JSON.stringify(values),
+      })
+      // Handle response
+    } catch (error) {
+      // Handle error
+    }
+  }}
+>
+  {/* Fields */}
+</Form>
+```
+
+### Submitting State
+
+Access form state with context:
+
+```tsx
+import { useFormContext } from '@/components/ui/form-builder'
+
+function SubmitButton() {
+  const { isSubmitting } = useFormContext()
+
+  return (
+    <Button type="submit" disabled={isSubmitting}>
+      {isSubmitting ? 'Submitting...' : 'Submit'}
+    </Button>
+  )
+}
+```
+
+### Form Reset
+
+```tsx
+import { useFormContext } from '@/components/ui/form-builder'
+
+function ResetButton() {
+  const { reset } = useFormContext()
+
+  return (
+    <Button type="button" onClick={reset}>
+      Reset Form
+    </Button>
+  )
+}
+```
+
+## Complete Example
+
+```tsx
+'use client'
+
+import {
+  Form,
+  FormInput,
+  FormTextarea,
+  FormSelect,
+  FormCheckbox,
+  FormSection,
+  FormGrid,
+} from '@/components/ui'
+import { Button } from '@/components/ui/button'
+
+interface UserFormData {
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  role: string
+  bio: string
+  terms: boolean
+}
+
+export default function UserForm() {
+  return (
+    <Form<UserFormData>
+      initialValues={{
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        role: 'user',
+        bio: '',
+        terms: false,
+      }}
+      onSubmit={async (values) => {
+        console.log('Submitting:', values)
+        // API call here
+      }}
+      onChange={(values) => {
+        console.log('Form changed:', values)
+      }}
+    >
+      <FormSection
+        title="Personal Information"
+        description="Enter your personal details"
+      >
+        <FormGrid columns={2}>
+          <FormInput
+            accessor="firstName"
+            label="First Name"
+            required
+            placeholder="John"
+          />
+          <FormInput
+            accessor="lastName"
+            label="Last Name"
+            required
+            placeholder="Doe"
+          />
+        </FormGrid>
+
+        <FormInput
+          accessor="email"
+          label="Email"
+          type="email"
+          required
+          placeholder="john@example.com"
+        />
+
+        <FormInput
+          accessor="phone"
+          label="Phone"
+          type="tel"
+          placeholder="+1 (555) 000-0000"
+        />
+      </FormSection>
+
+      <FormSection
+        title="Account Settings"
+        description="Configure your account"
+      >
+        <FormSelect
+          accessor="role"
+          label="Role"
+          options={[
+            { label: 'User', value: 'user' },
+            { label: 'Admin', value: 'admin' },
+            { label: 'Moderator', value: 'moderator' },
+          ]}
+          required
+        />
+
+        <FormTextarea
+          accessor="bio"
+          label="Biography"
+          placeholder="Tell us about yourself..."
+          rows={5}
+        />
+
+        <FormCheckbox
+          accessor="terms"
+          label="I agree to the terms and conditions"
+          required
+        />
+      </FormSection>
+
+      <div className="flex gap-4">
+        <Button type="submit">Create User</Button>
+        <Button type="button" variant="outline">
+          Cancel
+        </Button>
+      </div>
+    </Form>
+  )
+}
+```
+
+## Next Steps
+
+- [Field Reference](/docs/components/form-builder/fields) - All available fields
+- [Layout Components](/docs/components/form-builder/layout) - Form layouts
+- [Validation Guide](/docs/components/form-builder/validation) - Custom validation
+- [Form API](/docs/api-reference/form-api) - Complete API reference
+- [Form Examples](/docs/guides/form-examples) - Real-world examples

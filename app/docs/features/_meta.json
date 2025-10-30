@@ -1,0 +1,14 @@
+{
+  "page": {
+    "title": "Overview",
+    "type": "page"
+  },
+  "authentication": {
+    "title": "Authentication",
+    "type": "page"
+  },
+  "database-integration": {
+    "title": "Database Integration",
+    "type": "page"
+  }
+}

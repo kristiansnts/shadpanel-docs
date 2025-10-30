@@ -1,0 +1,14 @@
+{
+  "page": {
+    "title": "Overview",
+    "type": "page"
+  },
+  "init": {
+    "title": "shadpanel init",
+    "type": "page"
+  },
+  "database": {
+    "title": "shadpanel db",
+    "type": "page"
+  }
+}
