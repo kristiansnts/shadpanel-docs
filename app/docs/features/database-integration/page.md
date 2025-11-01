@@ -302,6 +302,8 @@ export async function deleteUser(id: number) {
 
 ## Schema Management
 
+> Note: The `shadpanel db generate-schema` command was removed — define your schema manually in `prisma/schema.prisma` (or render your template into `prisma/schema.prisma`). After updating the schema, run migrations or push and then run `shadpanel db generate` to update the Prisma Client.
+
 ### Template Workflow
 
 ShadPanel supports template-based schemas for reusability:
@@ -311,15 +313,14 @@ ShadPanel supports template-based schemas for reusability:
    # Edit prisma/schema.prisma.template
    ```
 
-2. **Generate schema:**
-   ```bash
-   shadpanel db generate-schema
-   ```
+2. **Render or update schema:**
+  - Edit `prisma/schema.prisma.template` and render or copy the result to `prisma/schema.prisma` as part of your workflow.
 
 3. **Migrate:**
-   ```bash
-   shadpanel db migrate update --regenerate
-   ```
+  ```bash
+  # Create and apply a migration (template regeneration supported)
+  shadpanel db migrate update --regenerate
+  ```
 
 **Benefits:**
 - Version controlled template
@@ -330,20 +331,24 @@ ShadPanel supports template-based schemas for reusability:
 
 For simple projects:
 
-1. **Generate once:**
-   ```bash
-   shadpanel db generate-schema
-   ```
+1. **Edit schema directly:**
+  ```bash
+  # Edit prisma/schema.prisma
+  ```
 
-2. **Edit directly:**
-   ```bash
-   # Edit prisma/schema.prisma
-   ```
-
-3. **Migrate:**
-   ```bash
-   shadpanel db migrate update
-   ```
+2. **Apply changes and generate client:**
+  - Create a migration and apply it:
+    ```bash
+    shadpanel db migrate [name]
+    ```
+  - Or, for quick prototyping without migration history:
+    ```bash
+    shadpanel db push
+    ```
+  After applying changes, regenerate the Prisma Client:
+  ```bash
+  shadpanel db generate
+  ```
 
 ## Migrations
 

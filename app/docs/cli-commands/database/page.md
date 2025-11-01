@@ -56,32 +56,6 @@ $ shadpanel db init
 
 ---
 
-### db generate-schema
-
-Generate `schema.prisma` from template.
-
-```bash
-shadpanel db generate-schema
-```
-
-**What it does:**
-- Reads `prisma/schema.prisma.template`
-- Substitutes variables from `.env`
-- Creates `prisma/schema.prisma`
-
-**Example:**
-```bash
-$ shadpanel db generate-schema
-
-✓ Generating Prisma schema from template...
-✓ Prisma schema generated successfully!
-```
-
-**Template variables:**
-- `{{DATABASE_DRIVER}}` → `provider` value from env
-- `{{DATABASE_URL}}` → Connection string from `.env`
-
----
 
 ### db generate
 
@@ -92,8 +66,9 @@ shadpanel db generate
 ```
 
 **What it does:**
-1. Generates schema from template
-2. Generates Prisma Client (TypeScript types + database client)
+1. Generates Prisma Client (TypeScript types + database client) from your existing `prisma/schema.prisma`.
+
+> Note: The `shadpanel db generate-schema` command was removed — define your schema manually in `prisma/schema.prisma` (or use your `prisma/schema.prisma.template` workflow) before running this command.
 
 **Example:**
 ```bash
@@ -322,6 +297,8 @@ shadpanel db reset --force
 
 ## Workflows
 
+> NOTE: The `shadpanel db generate-schema` command has been removed. Create or edit `prisma/schema.prisma` manually. To apply changes and update the Prisma client, either run `shadpanel db migrate [name]` (to create migrations) or `shadpanel db push` (for prototyping) and then run `shadpanel db generate` to regenerate the Prisma Client.
+
 ### Workflow 1: Template-Based (Recommended)
 
 For reusable schemas and team collaboration:
@@ -382,33 +359,37 @@ For reusable schemas and team collaboration:
 For one-time changes and simple projects:
 
 1. **Initialize database:**
-   ```bash
-   shadpanel db init
-   ```
+  ```bash
+  shadpanel db init
+  ```
 
-2. **Generate schema once:**
-   ```bash
-   shadpanel db generate-schema
-   ```
+2. **Create or edit schema manually:**
+  Edit (or create) `prisma/schema.prisma` directly, for example:
+  ```prisma
+  model User {
+    id    Int    @id @default(autoincrement())
+    email String @unique
+    name  String?
+  }
+  ```
 
-3. **Edit schema directly:**
-   Edit `prisma/schema.prisma`:
-   ```prisma
-   model User {
-     id    Int    @id @default(autoincrement())
-     email String @unique
-     name  String?
-   }
-   ```
-
-4. **Migrate (without regenerate):**
-   ```bash
-   shadpanel db migrate add_users
-   ```
+3. **Apply changes and generate client:**
+  - To create migrations and apply them:
+    ```bash
+    shadpanel db migrate [name]
+    ```
+  - For quick prototyping (no migration history):
+    ```bash
+    shadpanel db push
+    ```
+  After either command, regenerate the Prisma Client:
+  ```bash
+  shadpanel db generate
+  ```
 
 **Benefits:**
 - ✅ Simple and direct
-- ✅ No template management
+- ✅ No template management required
 - ✅ Quick changes
 
 ---
@@ -418,24 +399,26 @@ For one-time changes and simple projects:
 For rapid development without migrations:
 
 1. **Initialize database:**
-   ```bash
-   shadpanel db init
-   ```
+  ```bash
+  shadpanel db init
+  ```
 
-2. **Edit schema:**
-   ```bash
-   shadpanel db generate-schema
-   # Edit prisma/schema.prisma
-   ```
+2. **Edit schema directly:**
+  Edit `prisma/schema.prisma` as needed.
 
 3. **Push to database:**
-   ```bash
-   shadpanel db push
-   ```
+  ```bash
+  shadpanel db push
+  ```
 
-4. **Repeat:**
-   - Make schema changes
-   - Run `shadpanel db push` again
+4. **Regenerate Prisma Client:**
+  ```bash
+  shadpanel db generate
+  ```
+
+5. **Repeat:**
+  - Make schema changes
+  - Run `shadpanel db push` and `shadpanel db generate` again
 
 **Benefits:**
 - ✅ Fast iteration
