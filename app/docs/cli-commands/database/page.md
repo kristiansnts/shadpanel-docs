@@ -123,6 +123,26 @@ shadpanel db migrate
 3. Applies migrations to database
 4. Generates Prisma Client
 
+#### Status
+
+```bash
+shadpanel db migrate status
+```
+
+Up-to-date:
+```
+✔ Database is up to date! (N migrations applied)
+```
+
+With pending migrations:
+```
+✔ Already on database: 4
+✖ Pending: 1
+
+Pending migrations:
+  → 20251102224716_add_test_field
+```
+
 ---
 
 ### db push

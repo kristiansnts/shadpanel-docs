@@ -16,6 +16,7 @@ Database management commands powered by Prisma. Generate migrations, run migrati
 
 ```bash
 shadpanel db migrate
+shadpanel db migrate status
 shadpanel db studio
 ```
 
