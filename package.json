@@ -1,6 +1,13 @@
 {
-  "name": "my-v0-project",
-  "version": "0.1.0",
+  "name": "shadpanel-docs",
+  "version": "1.0.0",
+  "description": "Documentation for Shadpanel - Admin Panel CLI for Next.js",
+  "keywords": ["shadpanel", "admin panel", "nextjs", "react", "shadcn-ui", "tailwind"],
+  "homepage": "https://shadpanel.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kristiansnts/shadpanel"
+  },
   "private": true,
   "scripts": {
     "dev": "next dev",
