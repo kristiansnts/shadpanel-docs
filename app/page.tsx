@@ -75,9 +75,9 @@ export default function Home() {
           <p className="text-lg text-muted-foreground mb-4 text-balance">
             Admin Panel CLI - Create complete admin panels instantly
           </p>
-           <button className="bg-primary text-primary-foreground px-8 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity cursor-pointer">
+           <a href="/docs" className="bg-primary text-primary-foreground px-8 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity cursor-pointer">
               Get Started
-            </button>
+            </a>
             <div className="flex items-center justify-center">
               <div className="relative">
             <button
