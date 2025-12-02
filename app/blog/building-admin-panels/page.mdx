@@ -1,0 +1,457 @@
+---
+title: "Building a Blog CMS with ShadPanel: A Step-by-Step Guide"
+description: "Build a complete blog CMS from scratch in less than 10 minutes with ShadPanel"
+date: "2025-12-01"
+author: "Shadpanel Team"
+---
+
+# Building a Blog CMS with ShadPanel: A Step-by-Step Guide
+
+I spent the last hour building a complete blog CMS from scratch. No boilerplate copy-pasting, no hours of configuration. Just straight development. Here's how I did it with ShadPanel.
+
+## What We're Building
+
+A functional blog CMS with:
+
+- User management (authors)
+- Post creation with relationships
+- Admin dashboard with data tables
+- Form validation and error handling
+
+Total setup time: Less than 10 minutes.
+
+## Step 1: Install ShadPanel CLI
+
+First, install ShadPanel globally:
+
+```bash
+npm install -g shadpanel
+```
+
+Then initialize your project:
+
+```bash
+cd blog-app
+shadpanel init
+```
+
+ShadPanel will prompt you with several questions:
+
+```
+✓ What is your project name? … blog-app
+✓ What do you want to install? › Full Panel with Auth
+✓ Which package manager do you want to use? › pnpm
+✓ Which authentication providers do you want? › Email/Password (Credentials), Google OAuth
+✓ Do you want to include demo pages? (recommended for learning) … no
+✓ Initialize a git repository? … no
+```
+
+Choose your preferences based on your needs. It handles dependency installation automatically.
+
+This scaffolds a Next.js 15 project with everything pre-configured:
+
+- Authentication (NextAuth.js)
+- UI components (shadcn/ui)
+- Form builders
+- Data tables
+- Sidebar navigation
+
+No need to manually install components. No configuration hell.
+
+## Step 2: Database Setup
+
+Initialize the database:
+
+```bash
+shadpanel db init
+```
+
+This prompts you to select a database driver. I chose PostgreSQL.
+
+It automatically:
+
+- Creates `.env` with database URL
+- Installs `@prisma/client` and `prisma`
+- Generates initial Prisma schema
+
+### Using Neon (Serverless Postgres)
+
+I used [Neon](https://neon.tech) for this project. It's serverless PostgreSQL with a generous free tier. Perfect for prototyping.
+
+Create a new project on Neon and copy the connection string.
+
+Edit `.env`:
+
+```env
+DATABASE_URL="postgresql://user:password@ep-xxx.region.aws.neon.tech/dbname?sslmode=require"
+```
+
+### Alternative: Local PostgreSQL with Docker
+
+If you prefer local development:
+
+```bash
+docker run --name postgres \
+  -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_DB=blog_db \
+  -p 5432:5432 \
+  -d postgres:15
+```
+
+Then use:
+
+```env
+DATABASE_URL="postgresql://postgres:password@localhost:5432/blog_db"
+```
+
+Don't forget to set your NextAuth configuration:
+
+```env
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-here
+```
+
+## Step 3: Generate Initial Prisma Client
+
+Before defining your schema, generate the Prisma client:
+
+```bash
+shadpanel db generate
+```
+
+This creates the initial Prisma client from the default schema.
+
+## Step 4: Define Your Schema
+
+Edit `prisma/schema.prisma`:
+
+```prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  posts     Post[]
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String?
+  authorId  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  author    User     @relation(fields: [authorId], references: [id])
+}
+```
+
+Two models. One relationship. Keep it simple.
+
+## Step 5: Create Database Migration
+
+Create the migration:
+
+```bash
+shadpanel db migrate make create_user_and_post_tables
+```
+
+This generates a migration file in `prisma/migrations/` based on your schema diff.
+
+Apply the migration:
+
+```bash
+shadpanel db migrate run
+```
+
+Tables created. Schema synced.
+
+Now you have type-safe database access throughout your app.
+
+## Step 6: Generate Resources with ShadPanel
+
+This is where ShadPanel shines. Instead of manually creating CRUD pages, use the resource generator:
+
+```bash
+shadpanel resource user
+shadpanel resource post
+```
+
+This automatically generates:
+
+- List page with data table (`app/admin/dashboard/users/page.tsx`)
+- Create page with form (`app/admin/dashboard/users/create/page.tsx`)
+- Edit page with form (`app/admin/dashboard/users/edit/[id]/page.tsx`)
+- Server actions for CRUD operations (`app/admin/dashboard/users/actions.ts`)
+
+Each resource comes with:
+
+- Searchable, sortable data tables
+- Form validation
+- Toast notifications
+- Loading states
+- Error handling
+
+The generator reads your Prisma schema and creates TypeScript interfaces automatically.
+
+## Step 7: Create Prisma Client Utility
+
+Create `lib/prisma.ts`:
+
+```typescript
+import { PrismaClient } from "@prisma/client";
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+const prisma = globalForPrisma.prisma ?? new PrismaClient();
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}
+
+export default prisma;
+```
+
+This prevents multiple Prisma instances during development hot reload.
+
+## Step 8: Fix Create and Edit Pages
+
+The generated forms need some adjustments for the relationship between posts and users.
+
+### Update Posts Create Page
+
+Edit `app/admin/dashboard/posts/create/page.tsx`:
+
+Add user fetching at the top:
+
+```typescript
+import { getUsers } from "@/app/admin/dashboard/users/actions";
+
+const [users, setUsers] = useState<any[]>([]);
+
+useEffect(() => {
+  async function fetchUsers() {
+    try {
+      const rows = await getUsers();
+      const normalized = (rows || []).map((r: any) => ({
+        id: r.id,
+        email: r.email ?? "",
+        name: r.name ?? "",
+      }));
+      setUsers(normalized);
+    } catch (err: any) {
+      toast.error("Failed to load users");
+    }
+  }
+  fetchUsers();
+}, []);
+```
+
+Update the author field in the form:
+
+```typescript
+<FormSelect
+  accessor="authorId"
+  label="Author"
+  options={users.map((r) => ({
+    value: r.id,
+    label: r.name || r.email,
+  }))}
+/>
+```
+
+Update the submit handler to convert authorId to integer:
+
+```typescript
+const result = await createPost({
+  title: values.title,
+  content: values.content,
+  authorId: parseInt(values.authorId), // Convert to integer
+  createdAt: now.toISOString(),
+  updatedAt: now.toISOString(),
+});
+```
+
+### Update Posts Edit Page
+
+Edit `app/admin/dashboard/posts/edit/[id]/page.tsx` with the same changes:
+
+1. Fetch users on mount
+2. Update FormSelect with user options
+3. Convert authorId to integer on submit
+
+### Update Config Menu
+
+Edit `config/menu.ts` to organize your navigation:
+
+```typescript
+import { Users, House, StickyNote } from "lucide-react";
+
+export const defaultMenuConfig = {
+  navMain: [
+    {
+      title: "My Blog",
+      items: [
+        { title: "Dashboard", url: "/admin/dashboard", icon: House },
+        { title: "Posts", url: "/admin/dashboard/posts", icon: StickyNote },
+        { title: "Users", url: "/admin/dashboard/users", icon: Users },
+      ],
+    },
+  ],
+};
+```
+
+## Step 9: Run the Application
+
+Start the dev server:
+
+```bash
+pnpm dev
+```
+
+Navigate to http://localhost:3000/admin/dashboard
+
+You now have:
+
+- Complete user CRUD operations
+- Post management with author relationships
+- Searchable data tables
+- Form validation
+- Toast notifications
+
+## The Generated Code Structure
+
+Here's what ShadPanel creates:
+
+```
+app/admin/dashboard/
+├── users/
+│   ├── actions.ts          # Server actions (getUsers, createUser, etc.)
+│   ├── page.tsx            # List page with data table
+│   ├── create/
+│   │   └── page.tsx        # Create form
+│   └── edit/
+│       └── [id]/
+│           └── page.tsx    # Edit form
+└── posts/
+    ├── actions.ts
+    ├── page.tsx
+    ├── create/
+    │   └── page.tsx
+    └── edit/
+        └── [id]/
+            └── page.tsx
+```
+
+Each actions file includes:
+
+- `getResources()` - Fetch all records
+- `getResourceById(id)` - Fetch single record
+- `createResource(data)` - Create new record
+- `updateResource(id, data)` - Update existing record
+- `deleteResource(id)` - Delete record
+
+All type-safe. All using server actions. No API routes needed.
+
+## Key Commands Reference
+
+Here's the complete workflow:
+
+```bash
+# Install ShadPanel
+npm install -g shadpanel
+
+# Initialize project
+shadpanel init blog-app
+
+# Database setup
+shadpanel db init
+shadpanel db generate
+
+# After defining schema
+shadpanel db migrate make create_user_and_post_tables
+shadpanel db migrate run
+
+# Generate resources
+shadpanel resource user
+shadpanel resource post
+
+# Development
+pnpm dev
+
+# Other useful commands
+shadpanel db push              # Quick push without migrations
+shadpanel db studio            # Open Prisma Studio
+shadpanel db migrate status    # Check migration status
+```
+
+## Why This Workflow Works
+
+**Resource generator eliminates boilerplate**: One command creates CRUD pages, forms, and server actions.
+
+**Server actions replace API routes**: Type-safe by default. No REST endpoints to maintain.
+
+**Prisma handles data access**: Define schema once. Get TypeScript types automatically.
+
+**Form builder manages state**: No manual validation. No react-hook-form setup.
+
+**Tables are powerful out of the box**: Sorting, filtering, pagination. Zero configuration.
+
+**You own the code**: Everything lives in your project. Customize anything.
+
+## What I Learned
+
+The `shadpanel resource` command is the killer feature. In Laravel, I'd use `php artisan make:model` with migrations and controllers. ShadPanel brings that workflow to Next.js.
+
+The generated code is clean. No magic. Just TypeScript, React Server Components, and Prisma. You can read it, understand it, modify it.
+
+The form builder components are flexible. Use `FormInput`, `FormTextarea`, `FormSelect`, `FormToggle`, `FormMarkdownEditor`, etc. They handle validation automatically.
+
+Tables use TanStack Table under the hood. You get all the power without the setup.
+
+## Common Fixes
+
+### Issue: Relationship Fields
+
+Generated forms don't automatically populate relationship fields. You need to:
+
+1. Fetch related records (like we did with users)
+2. Map them to `FormSelect` options
+3. Convert IDs to correct type (parseInt for integers)
+
+### Issue: Timestamps
+
+Prisma manages `createdAt` and `updatedAt` automatically. You don't need to set them in forms, but the generated code includes them. You can remove them from the create/update calls.
+
+## The Bottom Line
+
+I've built three admin panels with ShadPanel now. Setup time dropped from hours to minutes.
+
+The `shadpanel resource` command is a game changer. One command generates everything you need for CRUD operations.
+
+The stack is solid:
+
+- Next.js 15 with App Router
+- Prisma for database access
+- TanStack Table for data tables
+- shadcn/ui for components
+- NextAuth.js for authentication
+
+No black boxes. No vendor lock-in. You own the code.
+
+If you're building internal tools, dashboards, or CMS systems, ShadPanel is worth trying. It brings Laravel-style productivity to Next.js.
+
+The only manual work was fixing the relationship fields in the post forms. Everything else was generated.
+
+That's a complete blog CMS in under 10 minutes of actual work.

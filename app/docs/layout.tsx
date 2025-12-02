@@ -1,6 +1,7 @@
 import React from 'react'
-import { Footer, Layout, Navbar } from 'nextra-theme-docs'
+import { Footer, Layout } from 'nextra-theme-docs'
 import { getPageMap } from 'nextra/page-map'
+import { SiteNavbar } from '@/components/site-navbar'
 import 'nextra-theme-docs/style.css'
 
 export const metadata = {
@@ -24,13 +25,7 @@ export default async function DocsLayout({ children }: {children: React.ReactNod
 
   return (
     <Layout
-      navbar={
-        <Navbar
-          logo={<b>Shadpanel</b>}
-          align='left'
-          projectLink="https://github.com/kristiansnts/shadpanel"
-        />
-      }
+      navbar={<SiteNavbar />}
       pageMap={pageMap}
       docsRepositoryBase="https://github.com/kristiansnts/shadpanel-docs/tree/main/app/docs"
       footer={<Footer>© {year} Shadpanel.</Footer>}
