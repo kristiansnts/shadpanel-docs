@@ -41,6 +41,9 @@ export default function Home() {
               <a href="/docs" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Docs
               </a>
+              <a href="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Blog
+              </a>
                <a href="https://shadpanel-demo.vercel.app" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Demo
               </a>
