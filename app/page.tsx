@@ -76,7 +76,7 @@ export default function Home() {
         <div className="text-center max-w-2xl">
           <h1 className="text-6xl font-bold mb-6 text-balance">Shadpanel</h1>
           <p className="text-lg text-muted-foreground mb-4 text-balance">
-            Admin Panel CLI - Create complete admin panels instantly
+            Admin Panel CLI 1.6.0 — Next.js 16, Better Auth, Prisma 6.18
           </p>
            <a href="/docs" className="bg-primary text-primary-foreground px-8 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity cursor-pointer">
               Get Started
@@ -114,7 +114,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-border">
         <div className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">© 2025 Shadpanel.</p>
+          <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Shadpanel.</p>
         </div>
       </footer>
     </div>

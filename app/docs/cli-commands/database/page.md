@@ -1,140 +1,119 @@
 # shadpanel db
 
-Database management commands powered by Prisma ORM.
+Database commands powered by Prisma **6.18.0**.
+
+The CLI never writes `prisma/schema.prisma.template` into your app. `db init` writes `prisma/schema.prisma` with `url = env("DATABASE_URL")`, plus `lib/prisma.ts` and `prisma/seed.ts`.
 
 ## Overview
 
-ShadPanel includes powerful database management through Prisma. The `shadpanel db` commands help you:
+```bash
+shadpanel db init
+shadpanel db generate          # Prisma Client only — does not rewrite schema.prisma
+shadpanel db migrate make <name>
+shadpanel db migrate run
+shadpanel db migrate status
+shadpanel db push
+shadpanel db pull
+shadpanel db studio
+shadpanel db seed
+shadpanel db reset
+```
 
-- Initialize database configuration
-- Generate Prisma schemas from templates
-- Run migrations and sync your database
-- Open Prisma Studio to browse data
-- Seed and reset your database
+Prisma is invoked as `node_modules/.bin/prisma` when present, otherwise `npx --yes prisma@6.18.0`. Unpinned `npx prisma` is not used (it can prompt for Prisma 8).
 
-## Commands
+If the project still has Prisma 5 in `package.json` or the schema, the CLI warns on stderr and still emits Prisma 6. It never emits Prisma 5.
 
-### db init
+## db init
 
-Initialize database configuration interactively.
+Initialize Prisma in the current project.
 
 ```bash
 shadpanel db init
+shadpanel db init --yes                  # sqlite + install Prisma, no prompts
+shadpanel db init --yes --driver postgresql
+shadpanel db init --force                # overwrite schema, client, and seed
+shadpanel db init --skip-install
 ```
 
-**What it does:**
-1. Prompts for database type (MySQL, PostgreSQL, SQLite, MongoDB)
-2. Creates `.env` file with database URL template
-3. Creates `prisma/schema.prisma.template`
-4. Optionally installs Prisma packages
+| Option | Description |
+|--------|-------------|
+| `--force` | Overwrite existing schema, `lib/prisma.ts`, and seed |
+| `--yes` | Defaults without prompting (driver `sqlite`, install Prisma) |
+| `--driver <driver>` | `mysql` \| `postgresql` \| `sqlite` \| `mongodb` |
+| `--use-npm` / `--use-pnpm` / `--use-yarn` / `--use-bun` | Package manager for the Prisma install |
+| `--skip-install` | Do not install Prisma packages |
 
-**Example:**
-```bash
-$ shadpanel db init
+**What it writes:**
 
-🗄️  Let's set up your database!
+1. `.env` with `DATABASE_DRIVER` and a `DATABASE_URL` template
+2. `prisma/schema.prisma` — Prisma 6 + Better Auth `User` / `Session` / `Account` / `Verification`
+3. `lib/prisma.ts` — PrismaClient singleton, `export default prisma`
+4. `prisma/seed.ts` — empty stub (no sample passwords)
+5. `package.json` `prisma.seed` (`npx tsx prisma/seed.ts`) when missing
+6. Pins `@prisma/client@6.18.0` and `prisma@6.18.0` if install is requested
+7. Runs `prisma generate`
 
-? Select your database provider ›
-  ❯ PostgreSQL
-    MySQL
-    SQLite
-    MongoDB
+A leftover `prisma/schema.prisma.template` (from ShadPanel ≤ 1.3.1) is treated as obsolete. Edit `schema.prisma`; do not keep using `.template`.
 
-? Install Prisma packages? › Yes
-? Which package manager? › pnpm
+**Next steps printed by the CLI:**
 
-✓ Environment configuration created (.env)
-✓ Prisma files created
-✓ Prisma packages installed
+1. Edit `.env` with real credentials
+2. Add models in `prisma/schema.prisma`
+3. `shadpanel db migrate make <name>`
+4. `shadpanel db migrate run`
+5. `shadpanel resource <Model>`
 
-✅ Database setup complete!
-```
+## db generate
 
-**Generated files:**
-- `.env` - Database connection URL
-- `prisma/schema.prisma.template` - Schema template
-
----
-
-
-### db generate
-
-Generate Prisma Client from schema.
+Generate Prisma Client from the existing `prisma/schema.prisma`. It does **not** interpolate a template or rewrite the schema.
 
 ```bash
 shadpanel db generate
 ```
 
-**What it does:**
-1. Generates Prisma Client (TypeScript types + database client) from your existing `prisma/schema.prisma`.
+Use the generated singleton:
 
-> Note: The `shadpanel db generate-schema` command was removed — define your schema manually in `prisma/schema.prisma` (or use your `prisma/schema.prisma.template` workflow) before running this command.
+```ts
+import prisma from '@/lib/prisma'
 
-**Example:**
-```bash
-$ shadpanel db generate
-
-✓ Generating Prisma schema from template...
-✓ Generating Prisma Client...
-
-✅ Database setup complete!
+const posts = await prisma.post.findMany()
 ```
 
-**Use Prisma Client:**
-```tsx
-import { PrismaClient } from '@prisma/client'
+## db migrate
 
-const prisma = new PrismaClient()
+Laravel-style workflow (no shadow database). Subcommands:
 
-// Now you can use prisma.user.findMany(), etc.
-```
-
----
-
-### db migrate
-
-Run database migrations.
+### migrate make
 
 ```bash
-shadpanel db migrate [name] [options]
+shadpanel db migrate make add_posts
+shadpanel db migrate make add_posts --empty   # empty SQL file
 ```
 
-**Arguments:**
-- `[name]` - Optional migration name (e.g., "add_users_table")
+Diffs the datasource against the datamodel and writes `prisma/migrations/<timestamp>_<name>/migration.sql`. If there are no changes, nothing is created.
 
-**Options:**
-- `--regenerate` - Regenerate schema from template before migrating
+### migrate run
 
-**Examples:**
 ```bash
-# Create migration from current schema
-shadpanel db migrate add_users
-
-# Regenerate from template, then migrate
-shadpanel db migrate add_users --regenerate
-
-# Without name (prompts for name)
-shadpanel db migrate
+shadpanel db migrate run
 ```
 
-**What it does:**
-1. Optionally regenerates schema from template
-2. Creates migration files in `prisma/migrations/`
-3. Applies migrations to database
-4. Generates Prisma Client
+Runs `prisma migrate deploy`, then `prisma generate`.
 
-#### Status
+### migrate status
 
 ```bash
 shadpanel db migrate status
 ```
 
-Up-to-date:
+Concise summary (not raw Prisma verbose output):
+
 ```
 ✔ Database is up to date! (N migrations applied)
 ```
 
-With pending migrations:
+or pending names:
+
 ```
 ✔ Already on database: 4
 ✖ Pending: 1
@@ -143,133 +122,60 @@ Pending migrations:
   → 20251102224716_add_test_field
 ```
 
----
+### Bare `db migrate`
 
-### db push
+`shadpanel db migrate` with no subcommand applies pending migrations (`migrate deploy`), same as `run` without regenerating the client in the default handler.
 
-Push schema to database without migrations.
+There is no `shadpanel db migrate [name]` positional from older docs, and no `--regenerate` on `migrate`.
+
+## db push
+
+Push the schema without migration files (prototyping).
 
 ```bash
-shadpanel db push [options]
-```
-
-**Options:**
-- `--regenerate` - Regenerate schema from template before pushing
-
-**Examples:**
-```bash
-# Push current schema
 shadpanel db push
-
-# Regenerate from template, then push
-shadpanel db push --regenerate
+shadpanel db push --regenerate           # re-copy from the CLI Prisma 6 template (skip-if-exists)
+shadpanel db push --regenerate --force   # overwrite schema.prisma from the CLI template
 ```
 
-**When to use:**
-- Prototyping and development
-- Don't need migration history
-- Quick schema changes
+`--regenerate` copies from the **CLI** template, not from a user-project `.template`.
 
-**When NOT to use:**
-- Production environments
-- Need migration history
-- Working in a team
+Do not use `db push` in production or when you need a migration history.
 
----
-
-### db pull
-
-Introspect existing database and update schema.
+## db pull
 
 ```bash
-shadpanel db pull [options]
-```
-
-**Options:**
-- `--force` - Overwrite existing schema
-
-**Examples:**
-```bash
-# Pull schema from database
 shadpanel db pull
-
-# Force overwrite existing schema
 shadpanel db pull --force
 ```
 
-**Use case:**
-- Connect to existing database
-- Reverse-engineer schema
-- Sync with database changes made outside Prisma
+Introspects the database into `schema.prisma`. Next step: `shadpanel db generate`.
 
----
-
-### db studio
-
-Open Prisma Studio to browse and edit data.
+## db studio
 
 ```bash
-shadpanel db studio [options]
-```
-
-**Options:**
-- `-p, --port <port>` - Port to run on (default: 5555)
-- `-b, --browser <browser>` - Browser to open
-
-**Examples:**
-```bash
-# Open on default port (5555)
 shadpanel db studio
-
-# Custom port
 shadpanel db studio --port 3333
-
-# Specific browser
 shadpanel db studio --browser firefox
 ```
 
-**What it does:**
-- Starts Prisma Studio web interface
-- Opens browser automatically
-- Browse, create, edit, delete records
-- Visual database management
+Default port 5555. Ctrl+C to stop.
 
-**Press Ctrl+C to stop**
-
----
-
-### db seed
-
-Seed database with initial data.
+## db seed
 
 ```bash
 shadpanel db seed
 ```
 
-**Requirements:**
-Add seed script to `package.json`:
+Runs Prisma db seed. `db init` already sets `prisma.seed` and writes a stub:
 
-```json
-{
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  }
-}
-```
-
-**Example seed file** (`prisma/seed.ts`):
-```typescript
-import { PrismaClient } from '@prisma/client'
+```ts
+import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
 
 async function main() {
-  await prisma.user.createMany({
-    data: [
-      { email: 'alice@example.com', name: 'Alice' },
-      { email: 'bob@example.com', name: 'Bob' },
-    ],
-  })
+  // Add seed data here.
 }
 
 main()
@@ -283,331 +189,55 @@ main()
   })
 ```
 
----
-
-### db reset
-
-Reset database (WARNING: deletes all data).
+## db reset
 
 ```bash
-shadpanel db reset [options]
-```
-
-**Options:**
-- `--force` - Skip confirmation prompt
-
-**Examples:**
-```bash
-# Reset with confirmation
 shadpanel db reset
-
-# Reset without confirmation
 shadpanel db reset --force
 ```
 
-**What it does:**
-1. Drops database
-2. Creates fresh database
-3. Runs all migrations
-4. Runs seed script (if configured)
+Runs `prisma migrate reset` (deletes all data). Development only.
 
-**⚠️ WARNING:** This deletes all data permanently!
+## Recommended Workflow
 
----
+After `shadpanel db init`:
 
-## Workflows
+1. Edit `.env`
+2. Define models in `prisma/schema.prisma`
+3. `shadpanel db migrate make <name>`
+4. `shadpanel db migrate run`
+5. `shadpanel resource <Model>`
 
-> NOTE: The `shadpanel db generate-schema` command has been removed. Create or edit `prisma/schema.prisma` manually. To apply changes and update the Prisma client, either run `shadpanel db migrate [name]` (to create migrations) or `shadpanel db push` (for prototyping) and then run `shadpanel db generate` to regenerate the Prisma Client.
+For development without migrations:
 
-### Workflow 1: Template-Based (Recommended)
+1. Edit `prisma/schema.prisma`
+2. `shadpanel db push`
 
-For reusable schemas and team collaboration:
-
-1. **Initialize database:**
-   ```bash
-   shadpanel db init
-   ```
-
-2. **Edit template:**
-   Edit `prisma/schema.prisma.template`:
-   ```prisma
-   datasource db {
-     provider = "{{DATABASE_DRIVER}}"
-     url      = "{{DATABASE_URL}}"
-   }
-
-   generator client {
-     provider = "prisma-client-js"
-   }
-
-   model User {
-     id        Int      @id @default(autoincrement())
-     email     String   @unique
-     name      String?
-     posts     Post[]
-     createdAt DateTime @default(now())
-   }
-
-   model Post {
-     id        Int      @id @default(autoincrement())
-     title     String
-     content   String?
-     authorId  Int
-     author    User     @relation(fields: [authorId], references: [id])
-     createdAt DateTime @default(now())
-   }
-   ```
-
-3. **Generate and migrate:**
-   ```bash
-   shadpanel db migrate init --regenerate
-   ```
-
-4. **Make changes:**
-   - Edit template
-   - Run `shadpanel db migrate update --regenerate`
-
-**Benefits:**
-- ✅ Version controlled template
-- ✅ Reusable across environments
-- ✅ Team consistency
-
----
-
-### Workflow 2: Direct Editing
-
-For one-time changes and simple projects:
-
-1. **Initialize database:**
-  ```bash
-  shadpanel db init
-  ```
-
-2. **Create or edit schema manually:**
-  Edit (or create) `prisma/schema.prisma` directly, for example:
-  ```prisma
-  model User {
-    id    Int    @id @default(autoincrement())
-    email String @unique
-    name  String?
-  }
-  ```
-
-3. **Apply changes and generate client:**
-  - To create migrations and apply them:
-    ```bash
-    shadpanel db migrate [name]
-    ```
-  - For quick prototyping (no migration history):
-    ```bash
-    shadpanel db push
-    ```
-  After either command, regenerate the Prisma Client:
-  ```bash
-  shadpanel db generate
-  ```
-
-**Benefits:**
-- ✅ Simple and direct
-- ✅ No template management required
-- ✅ Quick changes
-
----
-
-### Workflow 3: Prototyping
-
-For rapid development without migrations:
-
-1. **Initialize database:**
-  ```bash
-  shadpanel db init
-  ```
-
-2. **Edit schema directly:**
-  Edit `prisma/schema.prisma` as needed.
-
-3. **Push to database:**
-  ```bash
-  shadpanel db push
-  ```
-
-4. **Regenerate Prisma Client:**
-  ```bash
-  shadpanel db generate
-  ```
-
-5. **Repeat:**
-  - Make schema changes
-  - Run `shadpanel db push` and `shadpanel db generate` again
-
-**Benefits:**
-- ✅ Fast iteration
-- ✅ No migration files
-- ❌ No migration history
-
----
-
-## Database Configuration
-
-### Supported Databases
-
-#### PostgreSQL
+## Connection Strings
 
 ```env
-# .env
+# PostgreSQL
+DATABASE_DRIVER=postgresql
 DATABASE_URL="postgresql://user:password@localhost:5432/mydb?schema=public"
-```
 
-```prisma
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-```
-
-#### MySQL
-
-```env
-# .env
+# MySQL
+DATABASE_DRIVER=mysql
 DATABASE_URL="mysql://user:password@localhost:3306/mydb"
-```
 
-```prisma
-datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
-}
-```
-
-#### SQLite
-
-```env
-# .env
+# SQLite (db init --yes default)
+DATABASE_DRIVER=sqlite
 DATABASE_URL="file:./dev.db"
-```
 
-```prisma
-datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
-}
-```
-
-#### MongoDB
-
-```env
-# .env
+# MongoDB
+DATABASE_DRIVER=mongodb
 DATABASE_URL="mongodb+srv://user:password@cluster.mongodb.net/mydb"
 ```
 
-```prisma
-datasource db {
-  provider = "mongodb"
-  url      = env("DATABASE_URL")
-}
-```
-
----
-
-## Common Issues
-
-### Connection Errors
-
-**Problem:** Cannot connect to database
-
-**Solutions:**
-```bash
-# Check database is running
-# For PostgreSQL
-pg_isready
-
-# For MySQL
-mysqladmin ping
-
-# Check credentials in .env
-cat .env | grep DATABASE_URL
-```
-
-### Permission Errors
-
-**Problem:** User doesn't have permissions
-
-**Solutions:**
-```sql
--- PostgreSQL
-GRANT ALL PRIVILEGES ON DATABASE mydb TO myuser;
-
--- MySQL
-GRANT ALL PRIVILEGES ON mydb.* TO 'myuser'@'localhost';
-FLUSH PRIVILEGES;
-```
-
-### Migration Conflicts
-
-**Problem:** Migration conflicts or schema drift
-
-**Solutions:**
-```bash
-# Reset database (development only)
-shadpanel db reset --force
-
-# Or manually resolve
-prisma migrate resolve --rolled-back "migration_name"
-```
-
-### Schema Template Not Found
-
-**Problem:** `schema.prisma.template` doesn't exist
-
-**Solution:**
-```bash
-# Re-initialize database
-shadpanel db init
-```
-
----
-
-## Best Practices
-
-### 1. Use Templates for Teams
-
-Always use `schema.prisma.template` for team projects:
-- ✅ Version controlled
-- ✅ Consistent across environments
-- ✅ Easy to regenerate
-
-### 2. Run Migrations in Production
-
-Use migrations (`db migrate`) instead of push:
-- ✅ Migration history
-- ✅ Rollback capability
-- ✅ Safe deployments
-
-### 3. Seed Development Data
-
-Create seed scripts for consistent development:
-```typescript
-// prisma/seed.ts
-export async function seed() {
-  // Create test users, posts, etc.
-}
-```
-
-### 4. Back Up Before Reset
-
-Always backup before `db reset`:
-```bash
-# PostgreSQL
-pg_dump mydb > backup.sql
-
-# MySQL
-mysqldump mydb > backup.sql
-```
-
----
+The schema always uses `url = env("DATABASE_URL")`. The CLI does not interpolate credentials into `schema.prisma`.
 
 ## See Also
 
-- [Database Integration](/docs/features/database-integration) - Prisma integration guide
-- [Project Structure](/docs/get-started/project-structure) - Understanding the prisma folder
-- [Prisma Documentation](https://www.prisma.io/docs) - Official Prisma docs
+- [Database Integration](/docs/features/database-integration)
+- [shadpanel resource](/docs/cli-commands/resource)
+- [Project Structure](/docs/get-started/project-structure)
+- [Prisma docs](https://www.prisma.io/docs)

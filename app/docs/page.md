@@ -1,266 +1,201 @@
 # Documentation
 
-Welcome to the official ShadPanel documentation! ShadPanel is a powerful CLI tool that scaffolds complete Next.js admin panels with authentication, form builders, data tables, and 50+ UI components.
+Welcome to the official ShadPanel documentation. These pages describe **ShadPanel CLI 1.6.0**.
+
+ShadPanel scaffolds Next.js admin panels with authentication, form builders, data tables, and 50+ UI components based on [shadcn/ui](https://ui.shadcn.com). The hero path is **resource generation**: define a Prisma model, run one command, get list/create/edit/view pages.
+
+```bash
+npx shadpanel@latest init my-app
+cd my-app
+shadpanel db init
+# add a Post model to prisma/schema.prisma, then:
+shadpanel db migrate make add_posts
+shadpanel db migrate run
+shadpanel resource Post
+```
 
 ## What is ShadPanel?
 
-ShadPanel is a comprehensive admin panel generator built on top of Next.js 15 and shadcn/ui. It provides everything you need to build production-ready admin interfaces:
+ShadPanel generates a complete admin app from the CLI:
 
-- 🎨 **50+ UI Components** - Complete shadcn/ui component library
-- 📝 **Form Builder** - Filament-inspired declarative forms with validation
-- 📊 **Data Tables** - Powerful tables with sorting, filtering, and pagination
-- 🔐 **Authentication** - NextAuth.js with Google, GitHub, and credentials
-- 🗄️ **Database Integration** - Prisma ORM with support for PostgreSQL, MySQL, SQLite, MongoDB
-- 🎯 **TypeScript First** - Full type safety and IntelliSense support
-- 🌙 **Dark Mode** - Built-in theme support
-- 📱 **Responsive** - Mobile-friendly sidebar and layouts
-- ⚡ **Zero Config** - Works out of the box
+- 🎨 **50+ UI Components** — vendored shadcn/ui library
+- 📝 **Form Builder** — Filament-inspired declarative forms with validation
+- 📊 **Data Tables** — sorting, searching, and pagination
+- 🔐 **Authentication** — Better Auth with Google, GitHub, and credentials
+- 🗃️ **Resource generator** — `shadpanel resource` from a Prisma model (Resource 2.0)
+- 🎯 **TypeScript First** — full type safety
+- 🌙 **Dark Mode** — built-in theme support
+- 📱 **Responsive** — mobile-friendly sidebar and layouts
+
+`npx create-shadpanel-next` is **deprecated**. Use `npx shadpanel@latest init <name>` (or a global `shadpanel init`).
 
 ## Quick Start
 
-Get your admin panel running in less than 5 minutes:
-
 ```bash
-# Install globally
-npm install -g shadpanel
+# Scaffold a Next.js 16 + Better Auth app
+npx shadpanel@latest init my-admin-panel
+# or, if installed globally:
+# shadpanel init my-admin-panel
 
-# Create new project
-shadpanel init my-admin-panel
-
-# Start development
 cd my-admin-panel
 npm run dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000) to see your admin panel.
+Visit [http://localhost:3000](http://localhost:3000).
 
 [Get Started →](/docs/get-started/quick-start)
 
 ## Why ShadPanel?
 
-### 🚀 Lightning Fast Setup
+### Lightning-fast setup
 
-No more spending days setting up your admin panel infrastructure. ShadPanel generates a complete, production-ready admin panel in seconds:
+`shadpanel init` writes a production-ready Next.js 16 app: Better Auth, dashboard with sidebar, and the component library. `shadpanel db init` then pins Prisma 6.18.0 and writes `prisma/schema.prisma`, `lib/prisma.ts`, and a seed stub.
 
-- Complete Next.js project structure
-- Pre-configured authentication system
-- Dashboard with sidebar navigation
-- Demo pages to get you started
+### Resource 2.0
 
-### 🎨 Beautiful by Default
+`shadpanel resource Post` maps Prisma scalars and relations:
 
-Built on shadcn/ui, every component is beautifully designed and accessible:
+- belongsTo (n:1) → `FormSelect` of related records
+- hasMany / M2M → lists on the generated `view/[id]` page
+- Covered FK scalars (`authorId` when `author` exists) are skipped on forms
 
-- Modern, clean design
-- Consistent design system
-- Fully customizable with Tailwind CSS
-- Dark mode support
+[Learn more →](/docs/cli-commands/resource)
 
-### 💪 Powerful Features
+### Flexible install modes
 
-Everything you need for modern admin panels:
-
-**Form Builder:**
-```tsx
-<Form initialValues={{ email: '', role: 'user' }}>
-  <FormInput accessor="email" label="Email" required />
-  <FormSelect accessor="role" label="Role" options={roles} />
-  <Button type="submit">Save</Button>
-</Form>
-```
-
-**Data Tables:**
-```tsx
-<Table data={users}>
-  <TableTextColumn accessor="name" header="Name" sortable searchable />
-  <TableTextColumn accessor="email" header="Email" searchable />
-  <TableActionsColumn>
-    <TableAction icon={Edit} label="Edit" onClick={handleEdit} />
-  </TableActionsColumn>
-</Table>
-```
-
-### 🔧 Flexible & Extensible
-
-Use ShadPanel your way:
-
-- **Full Panel** - Complete admin panel with everything
-- **Auth + Components** - Authentication system + component library
-- **Components Only** - Just the UI components
-- **Merge into Existing Apps** - Add to your current Next.js project
+- **Full panel** — complete admin app (default)
+- **Auth + components** — Better Auth + UI library
+- **Components only** — just the vendored shadcn/ui components
+- **Merge into existing apps** — `shadpanel init .`
 
 ## Core Features
 
 ### Form Builder
 
-Declarative, type-safe forms with automatic validation:
+Declarative, type-safe forms:
 
-- 12+ field types (input, select, textarea, date, file upload, etc.)
+- 12+ field types (input, select, textarea, date, file upload, and more)
 - Layout components (grid, section, tabs, fieldset)
-- Built-in validation with custom rules
-- Real-time error feedback
+- Built-in validation
 - TypeScript support
 
 [Learn More →](/docs/components/form-builder)
 
 ### Data Tables
 
-Feature-rich tables for managing data:
-
 - Sorting and filtering
 - Global search
 - Pagination
-- Row selection and bulk actions
+- Row selection and row actions
 - Custom cell rendering
-- Column visibility controls
+- Column visibility
 
 [Learn More →](/docs/components/data-table)
 
 ### Authentication
 
-Complete authentication system with NextAuth.js:
+Complete authentication with **Better Auth** (not NextAuth):
 
-- Multiple auth providers (Google, GitHub, credentials)
-- Pre-built login/signup pages
-- Session management
-- Protected routes
-- Type-safe user data
+- Credentials (email/password), Google, and GitHub
+- Pre-built `/admin/login` and `/admin/signup`
+- Database sessions via the Prisma adapter
+- Dashboard gated by Next.js 16 `proxy.ts`
 
 [Learn More →](/docs/features/authentication)
 
 ### Database Integration
 
-Seamless Prisma integration:
+Prisma 6.18.0:
 
-- Support for PostgreSQL, MySQL, SQLite, MongoDB
-- Type-safe queries
-- Migration management
-- Prisma Studio for visual database browsing
-- CLI commands for easy database management
+- PostgreSQL, MySQL, SQLite, MongoDB
+- `url = env("DATABASE_URL")` (no user-project `.template`)
+- Laravel-style `migrate make` / `run` / `status`
+- Prisma Studio, seed, reset
 
 [Learn More →](/docs/features/database-integration)
-
-### UI Components
-
-50+ pre-built components:
-
-**Form Elements:** Button, Input, Label, Select, Checkbox, Switch, Textarea
-
-**Layout:** Card, Separator, Tabs, Sheet, Sidebar
-
-**Overlays:** Dialog, Dropdown Menu, Popover, Tooltip
-
-**Feedback:** Alert, Badge, Skeleton
-
-**Navigation:** Breadcrumb
-
-**Data Display:** Calendar, Table
-
-[View All Components →](/docs/components/overview)
 
 ## Installation Types
 
 ### Full Panel (Default)
 
-Complete admin panel with everything:
-
 ```bash
 shadpanel init my-app --full-panel
 ```
 
-**Includes:** Dashboard, authentication, components, demo pages
-
-**Best for:** Starting from scratch, complete admin panels
+Includes dashboard, Better Auth, components, and optional demo pages.
 
 ### Auth Components
-
-Authentication + component library:
 
 ```bash
 shadpanel init my-app --auth-components
 ```
 
-**Includes:** NextAuth.js, login/signup pages, all components
-
-**Best for:** Adding auth to existing apps, custom dashboards
+Better Auth (`lib/auth.ts`, `app/api/auth/[...all]/route.ts`, `proxy.ts`), login/signup, and the UI library.
 
 ### Components Only
-
-Just the component library:
 
 ```bash
 shadpanel init my-app --components-only
 ```
 
-**Includes:** 50+ UI components, form builder, data tables
-
-**Best for:** Existing Next.js apps, component library only
+50+ UI components, form builder, and data tables — no auth or dashboard.
 
 ## Documentation Structure
 
 ### Get Started
 
-- [Installation](/docs/get-started/installation) - Install and set up ShadPanel
-- [Quick Start](/docs/get-started/quick-start) - Create your first project
-- [Project Structure](/docs/get-started/project-structure) - Understand the generated files
+- [Installation](/docs/get-started/installation)
+- [Quick Start](/docs/get-started/quick-start)
+- [Project Structure](/docs/get-started/project-structure)
 
 ### CLI Commands
 
-- [shadpanel init](/docs/cli-commands/init) - Initialize projects
-- [shadpanel db](/docs/cli-commands/database) - Database management
+- [shadpanel init](/docs/cli-commands/init)
+- [shadpanel db](/docs/cli-commands/database)
+- [shadpanel resource](/docs/cli-commands/resource)
 
 ### Components
 
-- [Overview](/docs/components/overview) - Component library introduction
-- [Form Builder](/docs/components/form-builder) - Build powerful forms
-- [Data Tables](/docs/components/data-table) - Create data-rich tables
+- [Overview](/docs/components/overview)
+- [Form Builder](/docs/components/form-builder)
+- [Data Tables](/docs/components/data-table)
 
 ### Features
 
-- [Authentication](/docs/features/authentication) - NextAuth.js integration
-- [Database Integration](/docs/features/database-integration) - Prisma setup and usage
+- [Authentication](/docs/features/authentication)
+- [Database Integration](/docs/features/database-integration)
 
 ### Guides
 
-- [Merging with Existing Projects](/docs/guides/merging-existing-projects) - Add to existing apps
+- [Merging with Existing Projects](/docs/guides/merging-existing-projects)
+- [Protected Routes](/docs/guides/protected-routes)
+
+### API Reference
+
+- [Form API](/docs/api-reference/form-api)
+- [Table API](/docs/api-reference/table-api)
 
 ## Community & Support
 
-### Resources
-
 - **GitHub**: [github.com/kristiansnts/shadpanel](https://github.com/kristiansnts/shadpanel)
 - **NPM**: [npmjs.com/package/shadpanel](https://www.npmjs.com/package/shadpanel)
+- **Issues**: [github.com/kristiansnts/shadpanel/issues](https://github.com/kristiansnts/shadpanel/issues)
 
-### Get Help
+## Tech Stack (CLI 1.6.0)
 
-- Report issues on [GitHub Issues](https://github.com/kristiansnts/shadpanel/issues)
-- Ask questions in [Discussions](https://github.com/kristiansnts/shadpanel/discussions)
+Apps created with `shadpanel init` on 1.5.0+ use this stack. Apps already generated on 1.4.0 are **not** migrated automatically.
 
-## Tech Stack
-
-ShadPanel is built with modern, production-ready technologies:
-
-- **Next.js 15** - React framework
-- **React 18** - UI library
-- **TypeScript** - Type safety
-- **Tailwind CSS v4** - Styling
-- **shadcn/ui** - Component primitives
-- **NextAuth.js** - Authentication
-- **Prisma** - Database ORM
-- **Radix UI** - Accessible components
+- **Next.js 16** — App Router, `proxy.ts` (Node runtime, not Edge `middleware.ts`)
+- **React 19**
+- **Better Auth** — Prisma adapter (`better-auth`)
+- **Prisma 6.18.0**
+- **Tailwind CSS v4**
+- **shadcn/ui** — components vendored into the project
+- **TypeScript**
+- **Node.js** 20.9.0 or higher
 
 ## License
 
-MIT License - see [LICENSE](https://github.com/kristiansnts/shadpanel/blob/main/LICENSE) for details
-
-## Credits
-
-Built with and inspired by:
-
-- [shadcn/ui](https://ui.shadcn.com) by [@shadcn](https://twitter.com/shadcn)
-- [Filament](https://filamentphp.com) for form builder inspiration
-- The Next.js and React communities
-
----
+MIT License — see [LICENSE](https://github.com/kristiansnts/shadpanel/blob/main/LICENSE).
 
 **Ready to get started?** → [Quick Start Guide](/docs/get-started/quick-start)

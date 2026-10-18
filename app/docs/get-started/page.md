@@ -7,6 +7,7 @@ Welcome to the ShadPanel getting started guide! This section will help you insta
 - [Installation](/docs/get-started/installation) - Install and set up ShadPanel
 - [Quick Start](/docs/get-started/quick-start) - Create your first project in 5 minutes
 - [Project Structure](/docs/get-started/project-structure) - Understand the generated files and folder structure
+- [shadpanel resource](/docs/cli-commands/resource) - Generate CRUD from a Prisma model (Resource 2.0)
 
 ## What You'll Learn
 

@@ -6,5 +6,17 @@
   "merging-existing-projects": {
     "title": "Merging with Existing Projects",
     "type": "page"
+  },
+  "protected-routes": {
+    "title": "Protected Routes",
+    "type": "page"
+  },
+  "form-examples": {
+    "title": "Form Examples",
+    "type": "page"
+  },
+  "table-examples": {
+    "title": "Table Examples",
+    "type": "page"
   }
 }

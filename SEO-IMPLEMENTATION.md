@@ -91,7 +91,7 @@ Created `components/structured-data.tsx` with:
    - Place all in `/public/` directory
 
 3. **Update Domain in Code**
-   - Current: `https://shadpanel.vercel.app`
+   - Current: `https://shadpanel-docs.vercel.app`
    - Change to your actual domain when deployed
    - Files to update: `app/layout.tsx`, `app/sitemap.ts`
 
@@ -146,7 +146,7 @@ Created `components/structured-data.tsx` with:
 https://search.google.com/test/rich-results
 
 # Check if indexed
-site:shadpanel.vercel.app
+site:shadpanel-docs.vercel.app
 ```
 
 ### Tools:

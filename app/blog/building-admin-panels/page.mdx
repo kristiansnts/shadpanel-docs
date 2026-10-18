@@ -7,6 +7,8 @@ author: "Shadpanel Team"
 
 # Building a Blog CMS with ShadPanel: A Step-by-Step Guide
 
+> **CLI 1.6.0:** New apps use **Next.js 16**, **React 19**, **Better Auth**, and **Prisma 6.18**. Resource 2.0 maps belongsTo relations to `FormSelect` and adds `view/[id]` pages. This walkthrough matches that stack.
+
 I spent the last hour building a complete blog CMS from scratch. No boilerplate copy-pasting, no hours of configuration. Just straight development. Here's how I did it with ShadPanel.
 
 ## What We're Building
@@ -48,13 +50,14 @@ ShadPanel will prompt you with several questions:
 
 Choose your preferences based on your needs. It handles dependency installation automatically.
 
-This scaffolds a Next.js 15 project with everything pre-configured:
+This scaffolds a Next.js 16 project with everything pre-configured:
 
-- Authentication (NextAuth.js)
-- UI components (shadcn/ui)
+- Authentication (Better Auth)
+- UI components (vendored shadcn/ui)
 - Form builders
 - Data tables
 - Sidebar navigation
+- `proxy.ts` (not `middleware.ts`)
 
 No need to manually install components. No configuration hell.
 
@@ -104,11 +107,12 @@ Then use:
 DATABASE_URL="postgresql://postgres:password@localhost:5432/blog_db"
 ```
 
-Don't forget to set your NextAuth configuration:
+`shadpanel init` already writes Better Auth secrets. Confirm:
 
 ```env
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your-secret-here
+BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_SECRET=your-secret-here
+DATABASE_DRIVER=postgresql
 ```
 
 ## Step 3: Generate Initial Prisma Client
@@ -191,6 +195,8 @@ This automatically generates:
 - List page with data table (`app/admin/dashboard/users/page.tsx`)
 - Create page with form (`app/admin/dashboard/users/create/page.tsx`)
 - Edit page with form (`app/admin/dashboard/users/edit/[id]/page.tsx`)
+- View page (`app/admin/dashboard/users/view/[id]/page.tsx`)
+- A `FormSelect` of authors on Post create/edit (Resource 2.0 belongsTo)
 - Server actions for CRUD operations (`app/admin/dashboard/users/actions.ts`)
 
 Each resource comes with:
@@ -424,11 +430,7 @@ Tables use TanStack Table under the hood. You get all the power without the setu
 
 ### Issue: Relationship Fields
 
-Generated forms don't automatically populate relationship fields. You need to:
-
-1. Fetch related records (like we did with users)
-2. Map them to `FormSelect` options
-3. Convert IDs to correct type (parseInt for integers)
+On CLI 1.6.0, belongsTo relations (`Post.author`) become a `FormSelect` automatically. hasMany / M2M show as lists on the view page. A lone FK scalar without a relation still needs a manual widget.
 
 ### Issue: Timestamps
 
@@ -442,16 +444,16 @@ The `shadpanel resource` command is a game changer. One command generates everyt
 
 The stack is solid:
 
-- Next.js 15 with App Router
-- Prisma for database access
+- Next.js 16 with App Router (`proxy.ts`)
+- Prisma 6.18 for database access
 - TanStack Table for data tables
 - shadcn/ui for components
-- NextAuth.js for authentication
+- Better Auth for authentication
 
 No black boxes. No vendor lock-in. You own the code.
 
 If you're building internal tools, dashboards, or CMS systems, ShadPanel is worth trying. It brings Laravel-style productivity to Next.js.
 
-The only manual work was fixing the relationship fields in the post forms. Everything else was generated.
+Resource 2.0 generates the author select for you. Remaining work is product-specific copy and extra fields.
 
 That's a complete blog CMS in under 10 minutes of actual work.

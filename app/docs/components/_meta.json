@@ -8,11 +8,9 @@
     "type": "page"
   },
   "form-builder": {
-    "title": "Form Builder",
-    "type": "page"
+    "title": "Form Builder"
   },
   "data-table": {
-    "title": "Data Table",
-    "type": "page"
+    "title": "Data Table"
   }
 }

@@ -10,14 +10,11 @@ export const metadata = {
 }
 
 export default async function BlogLayout({ children }: {children: React.ReactNode}) {
-  // Get page map - Nextra scans the entire app directory
   const fullPageMap = await getPageMap()
   const year = new Date().getFullYear()
 
-  // Filter to only include items from /blog route
   const blogEntry = fullPageMap.find((item: any) => item.route === '/blog' || item.name === 'blog') as any
 
-  // If blog entry has children (it's a folder), use those. Otherwise, create a filtered map
   const pageMap = (blogEntry && 'children' in blogEntry && Array.isArray(blogEntry.children))
     ? blogEntry.children
     : [blogEntry].filter(Boolean)
@@ -26,7 +23,12 @@ export default async function BlogLayout({ children }: {children: React.ReactNod
     <Layout
       navbar={<SiteNavbar />}
       pageMap={pageMap}
-      docsRepositoryBase="https://github.com/kristiansnts/shadpanel-docs/tree/main/app/blog"
+      docsRepositoryBase="https://github.com/kristiansnts/shadpanel-docs/tree/main"
+      editLink="Edit this page"
+      feedback={{
+        content: 'Question? Give us feedback →',
+        link: 'https://github.com/kristiansnts/shadpanel/issues',
+      }}
       footer={<Footer>© {year} Shadpanel.</Footer>}
     >
       {children}

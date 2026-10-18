@@ -1,24 +1,20 @@
 # Authentication
 
-Complete authentication system powered by NextAuth.js with support for OAuth providers and credentials.
+ShadPanel 1.5.0+ generates **Better Auth**, not NextAuth.js. New `shadpanel init` apps use `better-auth`, `lib/auth.ts`, `lib/auth-client.ts`, and `app/api/auth/[...all]/route.ts`. NextAuth `middleware.ts` and `[...nextauth]` are not generated.
+
+Apps already scaffolded on 1.4.0 (NextAuth v4) are not migrated automatically.
 
 ## Overview
 
-ShadPanel includes a pre-configured authentication system with:
+When authentication is enabled (the default for a full panel):
 
-- ✅ **NextAuth.js v5** - Industry-standard authentication
-- ✅ **Multiple Providers** - Google, GitHub, credentials (email/password)
-- ✅ **Session Management** - Automatic session handling
-- ✅ **Protected Routes** - Easy route protection
-- ✅ **Login/Signup Pages** - Pre-built authentication UI
-- ✅ **Type Safety** - Full TypeScript support
-- ✅ **Customizable** - Extend with your own providers
+- **Better Auth** with the Prisma adapter
+- Credentials (email/password), plus optional Google and GitHub
+- Pre-built `/admin/login` and `/admin/signup`
+- Database-backed sessions (`Session` / `Account` / `Verification` models)
+- Next.js 16 `proxy.ts` redirects unauthenticated `/admin/dashboard` requests to login
 
-## Quick Start
-
-### Enable Authentication
-
-When initializing a project, include authentication:
+## Enable Authentication
 
 ```bash
 # Full panel with auth (default)
@@ -27,161 +23,136 @@ shadpanel init my-app
 # Auth + components only
 shadpanel init my-app --auth-components
 
-# Choose specific providers
+# Choose providers
 shadpanel init my-app --google --github --credentials
 ```
 
-### Configure Environment Variables
+`--no-auth` skips authentication. `--components-only` also skips it.
 
-Edit `.env` file:
+## Environment Variables
+
+`shadpanel init` writes `.env` / `.env.example`. Better Auth uses:
 
 ```bash
-# Required for NextAuth
-NEXTAUTH_SECRET=your-secret-here
-NEXTAUTH_URL=http://localhost:3000
+# Required
+BETTER_AUTH_SECRET=  # generated for you at init
+BETTER_AUTH_URL=http://localhost:3000
 
-# Google OAuth (optional)
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
+# Google OAuth (optional — leave empty if unused)
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
 
-# GitHub OAuth (optional)
-GITHUB_ID=your-github-id
-GITHUB_SECRET=your-github-secret
+# GitHub OAuth (optional — leave empty if unused)
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
 ```
 
-## Authentication Providers
+There is no `NEXTAUTH_SECRET` or `NEXTAUTH_URL`.
 
-### Credentials (Email/Password)
+Generate a secret yourself with:
 
-Default provider for email/password authentication.
+```bash
+openssl rand -base64 32
+```
 
-**Configuration:**
+## Generated Auth Files
+
+```
+proxy.ts                          # Next.js 16 Node proxy (not middleware.ts)
+app/api/auth/[...all]/route.ts    # Better Auth HTTP handler
+lib/auth.ts                       # betterAuth() server instance
+lib/auth-client.ts                # createAuthClient() + signIn/signOut/signUp/useSession
+app/admin/login/page.tsx
+app/admin/signup/page.tsx
+components/login-form.tsx
+components/signup-form.tsx
+```
+
+### Server (`lib/auth.ts`)
+
 ```tsx
-// app/api/auth/[...nextauth]/route.ts
-import CredentialsProvider from "next-auth/providers/credentials"
+import { betterAuth } from "better-auth"
+import { prismaAdapter } from "better-auth/adapters/prisma"
+import { nextCookies } from "better-auth/next-js"
+import prisma from "@/lib/prisma"
 
-providers: [
-  CredentialsProvider({
-    name: "credentials",
-    credentials: {
-      email: { label: "Email", type: "email" },
-      password: { label: "Password", type: "password" }
+export const auth = betterAuth({
+  database: prismaAdapter(prisma, {
+    provider: prismaProvider(), // postgresql | mysql | sqlite from DATABASE_DRIVER
+  }),
+  secret: process.env.BETTER_AUTH_SECRET,
+  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  emailAndPassword: {
+    enabled: true, // when credentials were selected at init
+  },
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     },
-    async authorize(credentials) {
-      // Implement your authentication logic
-      const user = await authenticateUser(credentials.email, credentials.password)
-
-      if (user) {
-        return user
-      }
-      return null
-    }
-  })
-]
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID as string,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+    },
+  },
+  plugins: [nextCookies()],
+})
 ```
 
-**Login Page:**
-Pre-built at `/admin/login`
+OAuth blocks are only interpolated when you selected those providers. The generated `AuthProvidersConfig` always includes `google` / `github` / `credentials` keys (boolean defaults) so credentials-only apps still typecheck.
 
-**Signup Page:**
-Pre-built at `/admin/signup`
+### Client (`lib/auth-client.ts`)
 
-### Google OAuth
+```tsx
+import { createAuthClient } from "better-auth/react"
 
-Sign in with Google accounts.
+export const authClient = createAuthClient()
 
-**Setup:**
+export const { signIn, signOut, signUp, useSession } = authClient
+```
 
-1. **Create OAuth credentials:**
-   - Go to [Google Cloud Console](https://console.cloud.google.com/)
-   - Create a new project or select existing
-   - Navigate to "APIs & Services" → "Credentials"
-   - Create "OAuth 2.0 Client ID"
-   - Add authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
+There is no `SessionProvider` from `next-auth/react`. Theme + auth-provider context wrap the app; session is read through the Better Auth client.
 
-2. **Add to `.env`:**
-   ```bash
-   GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
-   GOOGLE_CLIENT_SECRET=your-client-secret
-   ```
+### Route handler
 
-3. **Configuration:**
-   ```tsx
-   import GoogleProvider from "next-auth/providers/google"
+```tsx
+// app/api/auth/[...all]/route.ts
+import { auth } from "@/lib/auth"
+import { toNextJsHandler } from "better-auth/next-js"
 
-   providers: [
-     GoogleProvider({
-       clientId: process.env.GOOGLE_CLIENT_ID!,
-       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-     })
-   ]
-   ```
-
-### GitHub OAuth
-
-Sign in with GitHub accounts.
-
-**Setup:**
-
-1. **Create OAuth App:**
-   - Go to [GitHub Settings](https://github.com/settings/developers)
-   - Navigate to "OAuth Apps" → "New OAuth App"
-   - Set Homepage URL: `http://localhost:3000`
-   - Set Authorization callback URL: `http://localhost:3000/api/auth/callback/github`
-
-2. **Add to `.env`:**
-   ```bash
-   GITHUB_ID=your-github-client-id
-   GITHUB_SECRET=your-github-client-secret
-   ```
-
-3. **Configuration:**
-   ```tsx
-   import GitHubProvider from "next-auth/providers/github"
-
-   providers: [
-     GitHubProvider({
-       clientId: process.env.GITHUB_ID!,
-       clientSecret: process.env.GITHUB_SECRET!,
-     })
-   ]
-   ```
+export const { GET, POST } = toNextJsHandler(auth)
+```
 
 ## Using Authentication
 
-### Check Session
+### Check session (client)
 
 ```tsx
 'use client'
 
-import { useSession } from 'next-auth/react'
+import { useSession } from '@/lib/auth-client'
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession()
+  const { data: session, isPending } = useSession()
 
-  if (status === 'loading') {
-    return <div>Loading...</div>
-  }
-
-  if (status === 'unauthenticated') {
-    return <div>Access Denied</div>
-  }
+  if (isPending) return <div>Loading...</div>
+  if (!session) return <div>Access Denied</div>
 
   return (
     <div>
-      <h1>Welcome, {session?.user?.name}</h1>
-      <p>Email: {session?.user?.email}</p>
+      <h1>Welcome, {session.user?.name}</h1>
+      <p>Email: {session.user?.email}</p>
     </div>
   )
 }
 ```
 
-### Sign In/Out
+### Sign in / out
 
 ```tsx
 'use client'
 
-import { signIn, signOut, useSession } from 'next-auth/react'
+import { signIn, signOut, useSession } from '@/lib/auth-client'
 import { Button } from '@/components/ui/button'
 
 export default function AuthButton() {
@@ -189,64 +160,42 @@ export default function AuthButton() {
 
   if (session) {
     return (
-      <div className="flex items-center gap-4">
-        <span>Signed in as {session.user?.email}</span>
+      <div>
+        <p>Welcome, {session.user?.email}</p>
         <Button onClick={() => signOut()}>Sign Out</Button>
       </div>
     )
   }
 
-  return (
-    <div className="flex gap-2">
-      <Button onClick={() => signIn('google')}>
-        Sign in with Google
-      </Button>
-      <Button onClick={() => signIn('github')}>
-        Sign in with GitHub
-      </Button>
-      <Button onClick={() => signIn('credentials')}>
-        Sign in with Email
-      </Button>
-    </div>
-  )
+  return <Button asChild><a href="/admin/login">Sign In</a></Button>
 }
 ```
 
-### Protected Pages
-
-#### Client Component
+The generated login form uses:
 
 ```tsx
-'use client'
-
-import { useSession } from 'next-auth/react'
-import { redirect } from 'next/navigation'
-
-export default function ProtectedPage() {
-  const { status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      redirect('/admin/login')
-    },
-  })
-
-  if (status === 'loading') {
-    return <div>Loading...</div>
-  }
-
-  return <div>Protected Content</div>
-}
+await signIn.email({ email, password })
+signIn.social({ provider: "google", callbackURL: "/admin/dashboard" })
+signIn.social({ provider: "github", callbackURL: "/admin/dashboard" })
 ```
 
-#### Server Component
+Signup uses:
 
 ```tsx
-import { getServerSession } from 'next-auth'
+await signUp.email({ name, email, password })
+```
+
+### Server session
+
+```tsx
+import { auth } from '@/lib/auth'
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 
 export default async function ProtectedPage() {
-  const session = await getServerSession(authOptions)
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  })
 
   if (!session) {
     redirect('/admin/login')
@@ -256,409 +205,168 @@ export default async function ProtectedPage() {
 }
 ```
 
-#### Middleware Protection
+## Protected Routes (`proxy.ts`)
+
+Next.js 16 does **not** generate `middleware.ts`. Unauthenticated dashboard access is gated by `proxy.ts` on the **Node.js** runtime:
 
 ```tsx
-// middleware.ts
-import { withAuth } from 'next-auth/middleware'
+// proxy.ts
+import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
 
-export default withAuth({
-  callbacks: {
-    authorized: ({ token }) => !!token,
-  },
-})
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  if (!pathname.startsWith("/admin/dashboard")) {
+    return NextResponse.next()
+  }
+
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  })
+
+  if (!session) {
+    const loginUrl = new URL("/admin/login", request.url)
+    loginUrl.searchParams.set("callbackUrl", pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  return NextResponse.next()
+}
 
 export const config = {
-  matcher: ['/admin/dashboard/:path*'],
+  matcher: ["/admin/dashboard", "/admin/dashboard/:path*"],
 }
 ```
 
-## Pre-built Auth Pages
+See [Protected Routes](/docs/guides/protected-routes) for how to extend this.
 
-### Login Page
+## OAuth Setup
 
-Located at `/admin/login`:
+Redirect URIs go through the Better Auth handler (`/api/auth/callback/<provider>`), not NextAuth.
 
-```tsx
-// app/admin/login/page.tsx
-import { LoginForm } from '@/components/login-form'
+### Google
 
-export default function LoginPage() {
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <LoginForm />
-    </div>
-  )
-}
-```
+1. [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials → OAuth 2.0 Client ID
+2. Authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
+3. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
 
-**Features:**
-- Email/password input
-- OAuth provider buttons
-- "Remember me" checkbox
-- "Forgot password" link
-- Link to signup page
-- Form validation
-- Error handling
+### GitHub
 
-### Signup Page
+1. [GitHub Developer Settings](https://github.com/settings/developers) → OAuth Apps
+2. Authorization callback URL: `http://localhost:3000/api/auth/callback/github`
+3. Set `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` (not `GITHUB_ID` / `GITHUB_SECRET`)
 
-Located at `/admin/signup`:
+## Prisma Models
 
-```tsx
-// app/admin/signup/page.tsx
-import { SignupForm } from '@/components/signup-form'
-
-export default function SignupPage() {
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <SignupForm />
-    </div>
-  )
-}
-```
-
-**Features:**
-- Name, email, password inputs
-- Password confirmation
-- OAuth provider buttons
-- Form validation
-- Link to login page
-- Error handling
-
-## Session Management
-
-### Access User Data
-
-```tsx
-const { data: session } = useSession()
-
-// User info
-session?.user?.name
-session?.user?.email
-session?.user?.image
-
-// Custom fields (if added)
-session?.user?.id
-session?.user?.role
-```
-
-### Update Session
-
-```tsx
-import { useSession } from 'next-auth/react'
-
-const { data: session, update } = useSession()
-
-// Update session data
-await update({
-  ...session,
-  user: {
-    ...session?.user,
-    name: 'New Name',
-  },
-})
-```
-
-### Session Callbacks
-
-Customize session data:
-
-```tsx
-// app/api/auth/[...nextauth]/route.ts
-callbacks: {
-  async session({ session, token }) {
-    // Add custom fields to session
-    if (session.user) {
-      session.user.id = token.sub
-      session.user.role = token.role
-    }
-    return session
-  },
-  async jwt({ token, user }) {
-    // Add custom fields to token
-    if (user) {
-      token.role = user.role
-    }
-    return token
-  },
-}
-```
-
-## Customization
-
-### Custom Login Page
-
-Replace the default login form:
-
-```tsx
-'use client'
-
-import { signIn } from 'next-auth/react'
-import { Form, FormInput } from '@/components/ui'
-import { Button } from '@/components/ui/button'
-
-export default function CustomLoginPage() {
-  return (
-    <div className="max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Sign In</h1>
-
-      <Form
-        initialValues={{ email: '', password: '' }}
-        onSubmit={async (values) => {
-          const result = await signIn('credentials', {
-            email: values.email,
-            password: values.password,
-            redirect: false,
-          })
-
-          if (result?.error) {
-            console.error(result.error)
-          } else {
-            window.location.href = '/admin/dashboard'
-          }
-        }}
-      >
-        <FormInput
-          accessor="email"
-          label="Email"
-          type="email"
-          required
-        />
-        <FormInput
-          accessor="password"
-          label="Password"
-          type="password"
-          required
-        />
-        <Button type="submit" className="w-full">
-          Sign In
-        </Button>
-      </Form>
-
-      <div className="mt-4 space-y-2">
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => signIn('google')}
-        >
-          Sign in with Google
-        </Button>
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => signIn('github')}
-        >
-          Sign in with GitHub
-        </Button>
-      </div>
-    </div>
-  )
-}
-```
-
-### Add Custom Provider
-
-```tsx
-import type { Provider } from 'next-auth/providers'
-import TwitterProvider from 'next-auth/providers/twitter'
-
-const providers: Provider[] = [
-  TwitterProvider({
-    clientId: process.env.TWITTER_CLIENT_ID!,
-    clientSecret: process.env.TWITTER_CLIENT_SECRET!,
-  }),
-  // ... other providers
-]
-```
-
-### Custom Authentication Logic
-
-```tsx
-CredentialsProvider({
-  async authorize(credentials) {
-    try {
-      // Your custom logic
-      const response = await fetch('https://your-api.com/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: credentials.email,
-          password: credentials.password,
-        }),
-      })
-
-      const user = await response.json()
-
-      if (response.ok && user) {
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        }
-      }
-
-      return null
-    } catch (error) {
-      return null
-    }
-  }
-})
-```
-
-## Database Integration
-
-### With Prisma
-
-Store users and sessions in database:
+`shadpanel db init` writes Better Auth models into `prisma/schema.prisma` (Prisma adapter). `Account.issuer` is **not** required — Better Auth never writes it; uniqueness is `@@unique([providerId, accountId])`.
 
 ```prisma
-// prisma/schema.prisma
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
   image         String?
-  password      String?   // For credentials
-  role          String    @default("user")
-  accounts      Account[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   sessions      Session[]
-}
+  accounts      Account[]
 
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
+  @@unique([email])
+  @@map("user")
 }
 
 model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
 }
 ```
 
-Configure adapter:
+2FA / username plugin tables are omitted on purpose.
 
-```tsx
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import { PrismaClient } from "@prisma/client"
+`lib/prisma.ts` must exist before Better Auth can run (created by `init` and by `db init` / `resource`). Auth uses `import prisma from '@/lib/prisma'`.
 
-const prisma = new PrismaClient()
+## Pre-built Pages
 
-export const authOptions = {
-  adapter: PrismaAdapter(prisma),
-  // ... rest of config
-}
-```
+- **Login** — `/admin/login` (`LoginForm` with credentials + optional OAuth buttons)
+- **Signup** — `/admin/signup` (`signUp.email`)
 
-## Security Best Practices
-
-### 1. Strong Secrets
-
-Generate secure `NEXTAUTH_SECRET`:
-
-```bash
-openssl rand -base64 32
-```
-
-### 2. HTTPS in Production
+## Production
 
 ```bash
 # .env.production
-NEXTAUTH_URL=https://yourdomain.com
+BETTER_AUTH_URL=https://yourdomain.com
+BETTER_AUTH_SECRET=  # long random secret
 ```
 
-### 3. Secure Cookies
+Use HTTPS. Register production OAuth callback URLs:
 
-```tsx
-cookies: {
-  sessionToken: {
-    name: `__Secure-next-auth.session-token`,
-    options: {
-      httpOnly: true,
-      sameSite: 'lax',
-      path: '/',
-      secure: true
-    }
-  }
-}
-```
-
-### 4. Rate Limiting
-
-Implement rate limiting on auth routes:
-
-```tsx
-// middleware.ts
-import { Ratelimit } from "@upstash/ratelimit"
-
-const ratelimit = new Ratelimit({
-  // ... config
-})
-
-export async function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname.startsWith('/api/auth')) {
-    const { success } = await ratelimit.limit(request.ip)
-    if (!success) {
-      return new Response('Too Many Requests', { status: 429 })
-    }
-  }
-}
-```
+- `https://yourdomain.com/api/auth/callback/google`
+- `https://yourdomain.com/api/auth/callback/github`
 
 ## Troubleshooting
 
-### "NEXTAUTH_SECRET is not set"
+### Session not found on the dashboard
 
-Add to `.env`:
-```bash
-NEXTAUTH_SECRET=$(openssl rand -base64 32)
-```
+1. Run `shadpanel db init` and migrate so Better Auth tables exist
+2. Confirm `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL`
+3. Confirm `lib/prisma.ts` exists and `DATABASE_URL` is set
 
-### OAuth Redirect URI Mismatch
+### OAuth redirect mismatch
 
-Ensure redirect URIs match in provider settings:
-- Development: `http://localhost:3000/api/auth/callback/[provider]`
-- Production: `https://yourdomain.com/api/auth/callback/[provider]`
+Callbacks are `/api/auth/callback/<provider>`, not `/api/auth/callback` from NextAuth's `[...nextauth]` path shape. The catch-all folder is `[...all]`.
 
-### Session Not Persisting
+### Upgrading from NextAuth (1.4.0 apps)
 
-Check that `SessionProvider` wraps your app:
-
-```tsx
-// app/layout.tsx
-import { SessionProvider } from 'next-auth/react'
-
-export default function RootLayout({ children }) {
-  return (
-    <html>
-      <body>
-        <SessionProvider>{children}</SessionProvider>
-      </body>
-    </html>
-  )
-}
-```
+1.4.0 apps are not migrated. For a new 1.6.0 app, run `shadpanel init` again in a new directory. Do not mix `next-auth` imports with the generated Better Auth files.
 
 ## Next Steps
 
-- [Database Integration](/docs/features/database-integration) - Store users in database
-- [Protected Routes](/docs/guides/protected-routes) - Secure your pages
-- [NextAuth.js Docs](https://next-auth.js.org/) - Official documentation
+- [Protected Routes](/docs/guides/protected-routes)
+- [Database Integration](/docs/features/database-integration)
+- [Better Auth docs](https://www.better-auth.com/docs)
