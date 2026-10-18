@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Sun, Moon, LogOut } from "lucide-react"
-import { useSession, signOut } from "next-auth/react"
+import { useSession, signOut } from "@/lib/auth-client"
 import { useTheme } from "next-themes"
 import { useEffect, useState } from "react"
 
@@ -43,8 +43,9 @@ export default function DashboardLayout({
       .slice(0, 2)
   }
 
-  const handleSignOut = () => {
-    signOut({ callbackUrl: '/admin/login' })
+  const handleSignOut = async () => {
+    await signOut()
+    window.location.href = "/admin/login"
   }
 
   return (
