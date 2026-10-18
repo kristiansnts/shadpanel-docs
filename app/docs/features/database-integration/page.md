@@ -1,701 +1,181 @@
 # Database Integration
 
-Powerful database management with Prisma ORM, supporting PostgreSQL, MySQL, SQLite, and MongoDB.
-
-## Overview
-
-ShadPanel integrates seamlessly with Prisma to provide:
-
-- ✅ **Multi-Database Support** - PostgreSQL, MySQL, SQLite, MongoDB
-- ✅ **Type-Safe Queries** - Auto-generated TypeScript types
-- ✅ **Schema Management** - Template-based schema generation
-- ✅ **Migrations** - Track and apply database changes
-- ✅ **Prisma Studio** - Visual database browser
-- ✅ **CLI Commands** - Easy database management via `shadpanel db`
+Prisma **6.18.0** via `shadpanel db`. Templates live in the CLI package only — your app gets `prisma/schema.prisma`, never `schema.prisma.template`.
 
 ## Quick Start
-
-### Initialize Database
-
-Run the interactive database setup:
 
 ```bash
 cd my-app
 shadpanel db init
+# or: shadpanel db init --yes --driver postgresql
 ```
 
 This will:
-1. Prompt for database type (PostgreSQL, MySQL, SQLite, MongoDB)
-2. Create `.env` with connection string template
-3. Create `prisma/schema.prisma.template`
-4. Optionally install Prisma packages
 
-### Configure Connection
+1. Prompt for driver (MySQL, PostgreSQL, SQLite, MongoDB), or use `--yes` (default sqlite)
+2. Write `.env` (`DATABASE_DRIVER`, `DATABASE_URL`)
+3. Write `prisma/schema.prisma` with Better Auth models and `url = env("DATABASE_URL")`
+4. Write `lib/prisma.ts` (`export default prisma`)
+5. Write `prisma/seed.ts` stub and `package.json` `prisma.seed`
+6. Install `@prisma/client@6.18.0` and `prisma@6.18.0` unless skipped
+7. Run `prisma generate`
 
-Edit `.env` with your database credentials:
+Then:
 
 ```bash
-# PostgreSQL
-DATABASE_URL="postgresql://user:password@localhost:5432/mydb?schema=public"
-
-# MySQL
-DATABASE_URL="mysql://user:password@localhost:3306/mydb"
-
-# SQLite
-DATABASE_URL="file:./dev.db"
-
-# MongoDB
-DATABASE_URL="mongodb+srv://user:password@cluster.mongodb.net/mydb"
+# edit prisma/schema.prisma — add your models
+shadpanel db migrate make add_posts
+shadpanel db migrate run
+shadpanel resource Post
 ```
 
-### Define Schema
+## Prisma Client Singleton
 
-Edit `prisma/schema.prisma.template`:
+`db init` and `resource` emit:
+
+```ts
+import { PrismaClient } from "@prisma/client"
+
+const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient }
+
+export const prisma = globalForPrisma.prisma ?? new PrismaClient()
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma
+}
+
+export default prisma
+```
+
+Generated resources use the default export:
+
+```ts
+import prisma from '@/lib/prisma'
+```
+
+## Schema
+
+Always:
 
 ```prisma
 datasource db {
-  provider = "{{DATABASE_DRIVER}}"
-  url      = "{{DATABASE_URL}}"
+  provider = "postgresql" // or mysql | sqlite | mongodb
+  url      = env("DATABASE_URL")
 }
 
 generator client {
   provider = "prisma-client-js"
 }
-
-model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  posts     Post[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Post {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  Int
-  author    User     @relation(fields: [authorId], references: [id])
-  createdAt DateTime @default(now())
-}
 ```
 
-### Generate and Migrate
+`db init` also appends Better Auth `User`, `Session`, `Account`, and `Verification` models. See [Authentication](/docs/features/authentication).
 
-```bash
-# Generate schema from template and run migration
-shadpanel db migrate init --regenerate
+Do not put credentials in the schema. `db generate` does **not** rewrite `schema.prisma`.
 
-# Generate Prisma Client
-shadpanel db generate
-```
-
-## Using Prisma Client
-
-### Create Client Instance
-
-```typescript
-// lib/prisma.ts
-import { PrismaClient } from '@prisma/client'
-
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
-}
-
-export const prisma = globalForPrisma.prisma ?? new PrismaClient()
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
-```
-
-### CRUD Operations
-
-#### Create
-
-```typescript
-import { prisma } from '@/lib/prisma'
-
-// Create a user
-const user = await prisma.user.create({
-  data: {
-    email: 'john@example.com',
-    name: 'John Doe',
-  },
-})
-
-// Create with relations
-const post = await prisma.post.create({
-  data: {
-    title: 'Hello World',
-    content: 'This is my first post',
-    author: {
-      connect: { id: user.id },
-    },
-  },
-})
-```
-
-#### Read
-
-```typescript
-// Find all users
-const users = await prisma.user.findMany()
-
-// Find by ID
-const user = await prisma.user.findUnique({
-  where: { id: 1 },
-})
-
-// Find with relations
-const userWithPosts = await prisma.user.findUnique({
-  where: { id: 1 },
-  include: { posts: true },
-})
-
-// Find with filters
-const activeUsers = await prisma.user.findMany({
-  where: {
-    email: {
-      contains: '@example.com',
-    },
-    posts: {
-      some: {
-        published: true,
-      },
-    },
-  },
-})
-```
-
-#### Update
-
-```typescript
-// Update single record
-const updatedUser = await prisma.user.update({
-  where: { id: 1 },
-  data: {
-    name: 'Jane Doe',
-  },
-})
-
-// Update many
-const result = await prisma.user.updateMany({
-  where: {
-    email: {
-      contains: '@example.com',
-    },
-  },
-  data: {
-    verified: true,
-  },
-})
-```
-
-#### Delete
-
-```typescript
-// Delete single record
-const deletedUser = await prisma.user.delete({
-  where: { id: 1 },
-})
-
-// Delete many
-const result = await prisma.user.deleteMany({
-  where: {
-    createdAt: {
-      lt: new Date('2023-01-01'),
-    },
-  },
-})
-```
-
-## Next.js Integration
-
-### Server Components
-
-Use Prisma directly in Server Components:
-
-```tsx
-// app/users/page.tsx
-import { prisma } from '@/lib/prisma'
-
-export default async function UsersPage() {
-  const users = await prisma.user.findMany({
-    orderBy: { createdAt: 'desc' },
-  })
-
-  return (
-    <div>
-      <h1>Users</h1>
-      <ul>
-        {users.map((user) => (
-          <li key={user.id}>
-            {user.name} ({user.email})
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-```
-
-### API Routes
-
-Use Prisma in API routes:
-
-```typescript
-// app/api/users/route.ts
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-
-export async function GET() {
-  const users = await prisma.user.findMany()
-  return NextResponse.json(users)
-}
-
-export async function POST(request: Request) {
-  const body = await request.json()
-
-  const user = await prisma.user.create({
-    data: {
-      email: body.email,
-      name: body.name,
-    },
-  })
-
-  return NextResponse.json(user)
-}
-```
-
-### Server Actions
-
-Use Prisma in Server Actions:
-
-```typescript
-// app/actions/users.ts
-'use server'
-
-import { prisma } from '@/lib/prisma'
-import { revalidatePath } from 'next/cache'
-
-export async function createUser(formData: FormData) {
-  const user = await prisma.user.create({
-    data: {
-      email: formData.get('email') as string,
-      name: formData.get('name') as string,
-    },
-  })
-
-  revalidatePath('/users')
-  return user
-}
-
-export async function deleteUser(id: number) {
-  await prisma.user.delete({
-    where: { id },
-  })
-
-  revalidatePath('/users')
-}
-```
-
-## Schema Management
-
-> Note: The `shadpanel db generate-schema` command was removed — define your schema manually in `prisma/schema.prisma` (or render your template into `prisma/schema.prisma`). After updating the schema, run migrations or push and then run `shadpanel db generate` to update the Prisma Client.
-
-### Template Workflow
-
-ShadPanel supports template-based schemas for reusability:
-
-1. **Edit template:**
-   ```bash
-   # Edit prisma/schema.prisma.template
-   ```
-
-2. **Render or update schema:**
-  - Edit `prisma/schema.prisma.template` and render or copy the result to `prisma/schema.prisma` as part of your workflow.
-
-3. **Migrate:**
-  ```bash
-  # Create and apply a migration (template regeneration supported)
-  shadpanel db migrate update --regenerate
-  ```
-
-**Benefits:**
-- Version controlled template
-- Reusable across environments
-- Consistent team setup
-
-### Direct Editing Workflow
-
-For simple projects:
-
-1. **Edit schema directly:**
-  ```bash
-  # Edit prisma/schema.prisma
-  ```
-
-2. **Apply changes and generate client:**
-  - Create a migration and apply it:
-    ```bash
-    shadpanel db migrate [name]
-    ```
-  - Or, for quick prototyping without migration history:
-    ```bash
-    shadpanel db push
-    ```
-  After applying changes, regenerate the Prisma Client:
-  ```bash
-  shadpanel db generate
-  ```
+A leftover `prisma/schema.prisma.template` from older ShadPanel versions is obsolete.
 
 ## Migrations
 
-### Creating Migrations
-
 ```bash
-# Create migration from schema changes
-shadpanel db migrate add_users_table
-
-# With template regeneration
-shadpanel db migrate add_users_table --regenerate
+shadpanel db migrate make add_users
+shadpanel db migrate run
+shadpanel db migrate status
 ```
 
-### Applying Migrations
+`make` diffs the database against the datamodel and writes SQL under `prisma/migrations/`. `run` is `prisma migrate deploy` plus client generate.
 
-Migrations are applied automatically when created. To apply pending migrations:
+There is no `shadpanel db migrate add_users --regenerate` and no `migrate update`.
 
-```bash
-npx prisma migrate deploy
-```
-
-### Migration History
-
-View migrations:
+## Push (prototyping)
 
 ```bash
-ls prisma/migrations/
+shadpanel db push
+shadpanel db push --regenerate --force  # overwrite schema from the CLI Prisma 6 template
 ```
 
-Each migration folder contains:
-- `migration.sql` - SQL statements
-- Migration timestamp in folder name
+Use migrations in production and in teams.
 
-### Reset Database
+## CRUD
 
-Reset and reapply all migrations:
+```ts
+import prisma from '@/lib/prisma'
 
-```bash
-shadpanel db reset
+const user = await prisma.user.create({
+  data: { id: '…', name: 'Jane', email: 'jane@example.com', emailVerified: false },
+})
+
+const posts = await prisma.post.findMany({
+  include: { author: true },
+  take: 100,
+})
+
+await prisma.post.update({
+  where: { id: 1 },
+  data: { published: true },
+})
+
+await prisma.post.delete({ where: { id: 1 } })
 ```
 
-**Warning:** This deletes all data!
+Server actions generated by `shadpanel resource` already wrap this pattern and call `revalidatePath`.
 
-## Prisma Studio
+### Server Components
 
-Visual database browser:
+```tsx
+import prisma from '@/lib/prisma'
+
+export default async function PostsPage() {
+  const posts = await prisma.post.findMany({ orderBy: { createdAt: 'desc' } })
+  return <ul>{posts.map((p) => <li key={p.id}>{p.title}</li>)}</ul>
+}
+```
+
+## Studio, Seed, Reset
 
 ```bash
 shadpanel db studio
+shadpanel db seed    # edit prisma/seed.ts first — the stub has no sample users
+shadpanel db reset   # deletes all data
 ```
 
-Opens at `http://localhost:5555`
-
-**Features:**
-- Browse all tables
-- Create, edit, delete records
-- Filter and search
-- View relations
-
-## Seeding
-
-### Create Seed Script
-
-```typescript
-// prisma/seed.ts
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
-
-async function main() {
-  // Delete existing data
-  await prisma.post.deleteMany()
-  await prisma.user.deleteMany()
-
-  // Create users
-  const alice = await prisma.user.create({
-    data: {
-      email: 'alice@example.com',
-      name: 'Alice',
-      posts: {
-        create: [
-          {
-            title: 'First Post',
-            content: 'Hello World!',
-            published: true,
-          },
-        ],
-      },
-    },
-  })
-
-  const bob = await prisma.user.create({
-    data: {
-      email: 'bob@example.com',
-      name: 'Bob',
-      posts: {
-        create: [
-          {
-            title: 'Second Post',
-            content: 'Learning Prisma',
-            published: false,
-          },
-        ],
-      },
-    },
-  })
-
-  console.log({ alice, bob })
-}
-
-main()
-  .then(async () => {
-    await prisma.$disconnect()
-  })
-  .catch(async (e) => {
-    console.error(e)
-    await prisma.$disconnect()
-    process.exit(1)
-  })
-```
-
-### Configure Seed Command
-
-```json
-// package.json
-{
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  }
-}
-```
-
-### Run Seed
+## Introspection
 
 ```bash
-shadpanel db seed
+shadpanel db pull
+shadpanel db generate
 ```
 
-## Advanced Patterns
+## Connection Strings
 
-### Transactions
-
-```typescript
-const [user, post] = await prisma.$transaction([
-  prisma.user.create({
-    data: { email: 'user@example.com', name: 'User' },
-  }),
-  prisma.post.create({
-    data: { title: 'Post', content: 'Content' },
-  }),
-])
+```env
+DATABASE_DRIVER=postgresql
+DATABASE_URL="postgresql://user:password@localhost:5432/mydb?schema=public"
 ```
 
-### Raw Queries
+SQLite (`--yes` default): `DATABASE_URL="file:./dev.db"`.
 
-```typescript
-// Raw SQL
-const users = await prisma.$queryRaw`
-  SELECT * FROM "User" WHERE "email" LIKE ${pattern}
-`
+Better Auth's adapter reads `DATABASE_DRIVER` (`postgresql` | `mysql` | `sqlite`).
 
-// Execute SQL
-await prisma.$executeRaw`
-  UPDATE "User" SET "verified" = true WHERE "email" = ${email}
-`
-```
+## Prisma 5 Detection
 
-### Middleware
-
-```typescript
-const prisma = new PrismaClient()
-
-prisma.$use(async (params, next) => {
-  const before = Date.now()
-  const result = await next(params)
-  const after = Date.now()
-
-  console.log(`Query ${params.model}.${params.action} took ${after - before}ms`)
-
-  return result
-})
-```
-
-### Soft Deletes
-
-```prisma
-model User {
-  id        Int       @id @default(autoincrement())
-  email     String    @unique
-  name      String?
-  deletedAt DateTime?
-}
-```
-
-```typescript
-// Soft delete
-await prisma.user.update({
-  where: { id: 1 },
-  data: { deletedAt: new Date() },
-})
-
-// Query only non-deleted
-const activeUsers = await prisma.user.findMany({
-  where: { deletedAt: null },
-})
-```
-
-## Database-Specific Features
-
-### PostgreSQL
-
-```prisma
-model User {
-  id    Int    @id @default(autoincrement())
-  email String @unique
-  data  Json   // JSON field
-  tags  String[] // Array field
-}
-```
-
-### MySQL
-
-```prisma
-model Post {
-  id      Int      @id @default(autoincrement())
-  title   String   @db.VarChar(255)
-  content String   @db.Text
-  views   Int      @default(0) @db.UnsignedInt
-}
-```
-
-### MongoDB
-
-```prisma
-model User {
-  id    String @id @default(auto()) @map("_id") @db.ObjectId
-  email String @unique
-  posts Post[]
-}
-
-model Post {
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
-  title    String
-  authorId String @db.ObjectId
-  author   User   @relation(fields: [authorId], references: [id])
-}
-```
+If `package.json` or the schema still looks like Prisma 5, the CLI warns and still emits Prisma 6. It never emits Prisma 5.
 
 ## Best Practices
 
-### 1. Connection Pooling
-
-```typescript
-// lib/prisma.ts - Singleton pattern
-const prisma = globalForPrisma.prisma ?? new PrismaClient({
-  log: ['query', 'error', 'warn'],
-})
-```
-
-### 2. Error Handling
-
-```typescript
-try {
-  const user = await prisma.user.create({ data })
-} catch (error) {
-  if (error instanceof Prisma.PrismaClientKnownRequestError) {
-    if (error.code === 'P2002') {
-      console.error('Unique constraint violation')
-    }
-  }
-  throw error
-}
-```
-
-### 3. Indexing
-
-```prisma
-model User {
-  email String @unique
-  name  String
-
-  @@index([name])
-  @@index([email, name])
-}
-```
-
-### 4. Pagination
-
-```typescript
-const page = 1
-const pageSize = 10
-
-const users = await prisma.user.findMany({
-  skip: (page - 1) * pageSize,
-  take: pageSize,
-})
-```
-
-### 5. Select Only Needed Fields
-
-```typescript
-const users = await prisma.user.findMany({
-  select: {
-    id: true,
-    email: true,
-    name: true,
-    // Don't include password
-  },
-})
-```
+- Edit `schema.prisma` only; keep `DATABASE_URL` in `.env`
+- Prefer `migrate make` / `run` over `push` once you share a database
+- Import `prisma` from `@/lib/prisma` (singleton) instead of `new PrismaClient()` in every file
+- Back up before `db reset`
 
 ## Troubleshooting
 
-### Migration Conflicts
-
-```bash
-# Mark migration as rolled back
-npx prisma migrate resolve --rolled-back migration_name
-
-# Mark migration as applied
-npx prisma migrate resolve --applied migration_name
-```
-
-### Schema Out of Sync
-
-```bash
-# Pull schema from database
-shadpanel db pull
-
-# Push schema to database (no migrations)
-shadpanel db push
-```
-
-### Connection Issues
-
-Check `.env` configuration:
-```bash
-echo $DATABASE_URL
-```
-
-Test connection:
-```bash
-npx prisma db execute --stdin <<< "SELECT 1"
-```
+- **Cannot connect** — check the database is running and `DATABASE_URL` in `.env`
+- **Prisma not initialized** on `resource` — run `shadpanel db init` first
+- **Schema drift** — `db migrate status`, then `make` / `run`, or `db pull` for an existing database
 
 ## Next Steps
 
-- [CLI Database Commands](/docs/cli-commands/database) - Complete command reference
-- [Prisma Documentation](https://www.prisma.io/docs) - Official Prisma docs
-- [Authentication](/docs/features/authentication) - Integrate auth with database
+- [CLI Database Commands](/docs/cli-commands/database)
+- [shadpanel resource](/docs/cli-commands/resource)
+- [Authentication](/docs/features/authentication)
+- [Prisma documentation](https://www.prisma.io/docs)

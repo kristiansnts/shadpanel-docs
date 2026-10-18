@@ -1,87 +1,48 @@
 import { MetadataRoute } from 'next'
+import { SITE_URL } from '@/lib/site'
+
+const paths = [
+  '/',
+  '/docs',
+  '/docs/get-started',
+  '/docs/get-started/installation',
+  '/docs/get-started/quick-start',
+  '/docs/get-started/project-structure',
+  '/docs/cli-commands',
+  '/docs/cli-commands/init',
+  '/docs/cli-commands/database',
+  '/docs/cli-commands/resource',
+  '/docs/components',
+  '/docs/components/overview',
+  '/docs/components/form-builder',
+  '/docs/components/form-builder/fields',
+  '/docs/components/form-builder/layout',
+  '/docs/components/form-builder/validation',
+  '/docs/components/data-table',
+  '/docs/components/data-table/columns',
+  '/docs/components/data-table/features',
+  '/docs/features',
+  '/docs/features/authentication',
+  '/docs/features/database-integration',
+  '/docs/guides',
+  '/docs/guides/merging-existing-projects',
+  '/docs/guides/protected-routes',
+  '/docs/guides/form-examples',
+  '/docs/guides/table-examples',
+  '/docs/api-reference',
+  '/docs/api-reference/form-api',
+  '/docs/api-reference/table-api',
+  '/blog',
+  '/blog/building-admin-panels',
+]
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://shadpanel.vercel.app'
   const currentDate = new Date()
 
-  return [
-    {
-      url: baseUrl,
-      lastModified: currentDate,
-      changeFrequency: 'weekly',
-      priority: 1,
-    },
-    {
-      url: `${baseUrl}/docs`,
-      lastModified: currentDate,
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/docs/components`,
-      lastModified: currentDate,
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/docs/components/data-table`,
-      lastModified: currentDate,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/docs/components/form-builder`,
-      lastModified: currentDate,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/docs/features`,
-      lastModified: currentDate,
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/docs/features/authentication`,
-      lastModified: currentDate,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/docs/features/database-integration`,
-      lastModified: currentDate,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/docs/guides`,
-      lastModified: currentDate,
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/docs/guides/merging-existing-projects`,
-      lastModified: currentDate,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/docs/cli-commands`,
-      lastModified: currentDate,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/docs/cli-commands/init`,
-      lastModified: currentDate,
-      changeFrequency: 'monthly',
-      priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/docs/cli-commands/database`,
-      lastModified: currentDate,
-      changeFrequency: 'monthly',
-      priority: 0.6,
-    },
-  ]
+  return paths.map((path) => ({
+    url: `${SITE_URL}${path === '/' ? '' : path}`,
+    lastModified: currentDate,
+    changeFrequency: path === '/' || path === '/docs' ? 'weekly' : 'monthly',
+    priority: path === '/' ? 1 : path === '/docs' ? 0.9 : 0.7,
+  }))
 }

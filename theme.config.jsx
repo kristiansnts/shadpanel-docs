@@ -3,12 +3,9 @@ export default {
   project: {
     link: 'https://github.com/kristiansnts/shadpanel'
   },
-  chat: {
-    link: 'https://discord.com'
-  },
-  docsRepositoryBase: 'https://github.com/kristiansnts/shadpanel',
+  docsRepositoryBase: 'https://github.com/kristiansnts/shadpanel-docs/tree/main',
   footer: {
-    text: '© 2025 Shadpanel.'
+    text: '© 2026 Shadpanel.'
   },
   search: {
     placeholder: 'Search documentation...'

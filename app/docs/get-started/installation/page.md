@@ -1,153 +1,65 @@
 # Installation
 
-Learn how to install and set up ShadPanel in your development environment.
+Install ShadPanel CLI 1.6.0.
 
 ## Prerequisites
 
-Before installing ShadPanel, ensure you have the following:
+- **Node.js** 20.9.0 or higher (Next.js 16)
+- **npm**, **pnpm**, **yarn**, or **bun**
+- **Git** (optional)
 
-- **Node.js** 18.0.0 or higher
-- **npm**, **pnpm**, **yarn**, or **bun** package manager
-- **Git** (optional, for version control)
-
-## Installation Methods
-
-### Step 1: Global Installation (Recommended)
-
-Install ShadPanel globally to use it anywhere:
+## Global Install (Recommended)
 
 ```bash
 npm install -g shadpanel
+shadpanel --version   # 1.6.0
 ```
 
-Verify the installation:
+## npx (No Global Install)
 
 ```bash
-shadpanel --version
+npx shadpanel@latest init my-app
 ```
 
-
-### Step 2: Direct Usage
-
-Use ShadPanel without installing it globally:
-
-```bash
-shadpanel init my-app
-```
-
-
-### Method 2: Using create-shadpanel-next
-
-You can also use the create package directly:
-
-```bash
-npx create-shadpanel-next my-app
-```
-
-This is an alternative entry point that provides the same functionality.
-
-## Package Manager Support
-
-ShadPanel supports all major Node.js package managers:
-
-### npm (Default)
+## Package Managers
 
 ```bash
 npm install -g shadpanel
 shadpanel init my-app
-```
 
-### pnpm
-
-```bash
 pnpm add -g shadpanel
 shadpanel init my-app --use-pnpm
-```
 
-### Yarn
-
-```bash
 yarn global add shadpanel
 shadpanel init my-app --use-yarn
-```
 
-### Bun
-
-```bash
 bun add -g shadpanel
 shadpanel init my-app --use-bun
 ```
 
-## Verify Installation
+## Deprecated Entrypoint
 
-After installation, verify that ShadPanel is working:
+`npx create-shadpanel-next` is **deprecated**. Use `npx shadpanel@latest init <name>`.
 
-```bash
-# Check version
-shadpanel --version
-
-# Get help
-shadpanel --help
-
-# List all commands
-shadpanel init --help
-```
-
-
-## Updating ShadPanel
-
-### Global Installation
-
-Update to the latest version:
+## Updating
 
 ```bash
 npm update -g shadpanel
+# pnpm update -g shadpanel
+# yarn global upgrade shadpanel
+# bun update -g shadpanel
 ```
 
-Or with other package managers:
-
-```bash
-# pnpm
-pnpm update -g shadpanel
-
-# yarn
-yarn global upgrade shadpanel
-
-# bun
-bun update -g shadpanel
-```
-
-### Check for Updates
-
-Check if a newer version is available:
-
-```bash
-npm outdated -g shadpanel
-```
+Existing 1.4.0 **apps** are not upgraded in place when you update the CLI. The 1.5.0/1.6.0 stack (Next.js 16, Better Auth, Prisma 6.18) applies to **new** `shadpanel init` apps.
 
 ## Uninstalling
 
-If you need to remove ShadPanel:
-
 ```bash
-# npm
 npm uninstall -g shadpanel
-
-# pnpm
-pnpm remove -g shadpanel
-
-# yarn
-yarn global remove shadpanel
-
-# bun
-bun remove -g shadpanel
 ```
-
 
 ## Next Steps
 
-Now that ShadPanel is installed, you're ready to create your first project:
-
-- [Quick Start](/docs/get-started/quick-start) - Create your first admin panel
-- [CLI Commands](/docs/cli-commands/init) - Learn all available commands
-- [Project Structure](/docs/get-started/project-structure) - Understand the generated files
+- [Quick Start](/docs/get-started/quick-start)
+- [shadpanel init](/docs/cli-commands/init)
+- [Project Structure](/docs/get-started/project-structure)

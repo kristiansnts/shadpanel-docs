@@ -1,0 +1,24 @@
+{
+  "page": {
+    "title": "Overview",
+    "type": "page"
+  },
+  "get-started": {
+    "title": "Get Started"
+  },
+  "cli-commands": {
+    "title": "CLI Commands"
+  },
+  "components": {
+    "title": "Components"
+  },
+  "features": {
+    "title": "Features"
+  },
+  "guides": {
+    "title": "Guides"
+  },
+  "api-reference": {
+    "title": "API Reference"
+  }
+}

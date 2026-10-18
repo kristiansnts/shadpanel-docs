@@ -5,9 +5,9 @@ export default {
     theme: {
       copyPage: false,
       typesetting: 'article',
-      layout: 'full',
+      layout: 'default',
       timestamp: false,
-      toc: false
+      toc: true
     }
   },
   blog: {
@@ -16,7 +16,7 @@ export default {
     theme: {
       copyPage: false,
       typesetting: 'article',
-      layout: 'full',
+      layout: 'default',
       timestamp: true,
       toc: true
     }

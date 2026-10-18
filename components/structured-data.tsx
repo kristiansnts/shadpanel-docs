@@ -1,4 +1,5 @@
 import React from 'react'
+import { CLI_VERSION, SITE_URL } from '@/lib/site'
 
 export function StructuredData() {
   const structuredData = {
@@ -8,7 +9,7 @@ export function StructuredData() {
     applicationCategory: 'DeveloperApplication',
     operatingSystem: 'Any',
     description: 'Admin Panel CLI for Next.js - Create complete admin dashboards instantly with authentication, database integration, and beautiful UI components.',
-    url: 'https://shadpanel.vercel.app',
+    url: SITE_URL,
     author: {
       '@type': 'Organization',
       name: 'Shadpanel',
@@ -24,10 +25,10 @@ export function StructuredData() {
       ratingValue: '5',
       ratingCount: '1'
     },
-    softwareVersion: '1.0.0',
+    softwareVersion: CLI_VERSION,
     installUrl: 'https://www.npmjs.com/package/shadpanel',
-    screenshot: 'https://shadpanel.vercel.app/og-image.png',
-    keywords: 'admin panel, nextjs, react, shadcn ui, tailwind css, dashboard, crud, authentication'
+    screenshot: `${SITE_URL}/og-image.png`,
+    keywords: 'admin panel, nextjs, react, shadcn ui, tailwind css, dashboard, crud, authentication, better auth'
   }
 
   const breadcrumbStructuredData = {
@@ -38,13 +39,13 @@ export function StructuredData() {
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://shadpanel.vercel.app'
+        item: SITE_URL
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Documentation',
-        item: 'https://shadpanel.vercel.app/docs'
+        item: `${SITE_URL}/docs`
       }
     ]
   }
@@ -53,8 +54,8 @@ export function StructuredData() {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'Shadpanel',
-    url: 'https://shadpanel.vercel.app',
-    logo: 'https://shadpanel.vercel.app/og-image.png',
+    url: SITE_URL,
+    logo: `${SITE_URL}/og-image.png`,
     sameAs: [
       'https://github.com/kristiansnts/shadpanel'
     ]

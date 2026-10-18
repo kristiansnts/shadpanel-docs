@@ -1,0 +1,14 @@
+{
+  "page": {
+    "title": "Overview",
+    "type": "page"
+  },
+  "form-api": {
+    "title": "Form API",
+    "type": "page"
+  },
+  "table-api": {
+    "title": "Table API",
+    "type": "page"
+  }
+}

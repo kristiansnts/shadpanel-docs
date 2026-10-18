@@ -2,4 +2,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://shadpanel.vercel.app/sitemap.xml
+Sitemap: https://shadpanel-docs.vercel.app/sitemap.xml

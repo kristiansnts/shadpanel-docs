@@ -2,369 +2,214 @@
 
 Initialize a new ShadPanel project or merge into an existing Next.js application.
 
+Generated apps (CLI 1.5.0+) are **Next.js 16 + React 19 + Better Auth**. Apps already generated on 1.4.0 are not migrated.
+
 ## Usage
 
 ```bash
+npx shadpanel@latest init [project-name] [options]
+# or, if installed globally:
 shadpanel init [project-name] [options]
 ```
+
+`npx create-shadpanel-next` is **deprecated**. Use `shadpanel init`.
 
 ## Arguments
 
 ### `[project-name]`
 
-The name of your project directory.
+Project directory name.
 
-- **Optional**: Prompts if not provided
-- **Current directory**: Use `.` to install in the current directory
-- **Examples**:
-  ```bash
-  shadpanel init my-admin-panel
-  shadpanel init .  # Install in current directory
-  ```
+- Optional: the CLI prompts if omitted
+- Use `.` to install in the current directory (merge mode)
+
+```bash
+shadpanel init my-admin-panel
+shadpanel init .  # current directory
+```
 
 ## Options
 
 ### Package Manager
 
-Choose your preferred package manager:
-
 | Option | Description |
 |--------|-------------|
-| `--use-npm` | Use npm as package manager |
-| `--use-pnpm` | Use pnpm as package manager |
-| `--use-yarn` | Use yarn as package manager |
-| `--use-bun` | Use bun as package manager |
-
-**Example:**
-```bash
-shadpanel init my-app --use-pnpm
-```
+| `--use-npm` | Use npm |
+| `--use-pnpm` | Use pnpm |
+| `--use-yarn` | Use yarn |
+| `--use-bun` | Use bun |
 
 ### Installation Type
 
-Control what gets installed:
-
 | Option | Description |
 |--------|-------------|
-| `--full-panel` | Install complete panel with auth (default) |
-| `--auth-components` | Install authentication + components only |
-| `--components-only` | Install UI components only |
-| `--no-auth` | Skip authentication setup |
-
-**Examples:**
-```bash
-# Full panel (default)
-shadpanel init my-app --full-panel
-
-# Just components
-shadpanel init my-app --components-only
-
-# Auth + components
-shadpanel init my-app --auth-components
-```
+| `--full-panel` | Complete panel with auth (default) |
+| `--auth-components` | Authentication + components only |
+| `--components-only` | UI components only |
+| `--no-auth` | Skip authentication |
 
 ### Authentication Providers
 
-Configure authentication providers:
-
 | Option | Description |
 |--------|-------------|
-| `--credentials` | Email/password authentication (default) |
-| `--google` | Include Google OAuth provider |
-| `--github` | Include GitHub OAuth provider |
-
-**Examples:**
-```bash
-# Google + GitHub OAuth
-shadpanel init my-app --google --github
-
-# Credentials only (default)
-shadpanel init my-app --credentials
-
-# All providers
-shadpanel init my-app --credentials --google --github
-```
+| `--credentials` | Email/password (default) |
+| `--google` | Google OAuth |
+| `--github` | GitHub OAuth |
 
 ### Other Options
 
 | Option | Description |
 |--------|-------------|
 | `--skip-install` | Skip installing packages |
-| `--disable-git` | Skip initializing git repository |
+| `--disable-git` | Skip `git init` |
 | `--yes` | Use defaults without prompting |
-| `--no-demos` | Skip demo pages |
+| `--no-demos` / `--skip-demos` | Skip demo pages |
 | `-e, --example <name>` | Bootstrap with a specific example |
 
-**Examples:**
-```bash
-# Skip package installation
-shadpanel init my-app --skip-install
-
-# Accept all defaults
-shadpanel init my-app --yes
-
-# No demos, no git
-shadpanel init my-app --no-demos --disable-git
-```
+`--no-demos` is the Commander flag (`demos: false`). `--skip-demos` is an alias.
 
 ## Installation Types
 
 ### Full Panel (Default)
-
-Complete admin panel with everything included:
 
 ```bash
 shadpanel init my-app --full-panel
 ```
 
 **Includes:**
-- ✅ Next.js project structure
-- ✅ Authentication system (NextAuth.js)
-- ✅ Dashboard with sidebar navigation
-- ✅ 50+ UI components
-- ✅ Form Builder
-- ✅ Data Tables
-- ✅ Demo pages (optional)
-- ✅ Landing page
 
-**Best for:** Starting from scratch, complete admin panels
+- Next.js 16 project (`next` ^16, `eslint-config-next` ^16)
+- Better Auth (`better-auth` ^1.7.2)
+- `proxy.ts` (Node runtime)
+- Dashboard with sidebar
+- Vendored shadcn/ui components (50+)
+- Form builder and data tables
+- Optional demo pages
+- Landing page
 
 ### Auth Components
-
-Authentication system + component library:
 
 ```bash
 shadpanel init my-app --auth-components
 ```
 
-**Includes:**
-- ✅ NextAuth.js setup
-- ✅ Login/signup pages
-- ✅ Auth providers configuration
-- ✅ 50+ UI components
-- ✅ Form Builder
-- ✅ Data Tables
-- ❌ Base dashboard structure
-
-**Best for:** Adding auth to existing apps, custom dashboards
+**Includes:** Better Auth files, login/signup, UI components. Skips the base dashboard when merging, and skips the full Next.js scaffold when targeting `.`.
 
 ### Components Only
-
-Just the component library:
 
 ```bash
 shadpanel init my-app --components-only
 ```
 
-**Includes:**
-- ✅ 50+ UI components
-- ✅ Form Builder
-- ✅ Data Tables
-- ✅ Utility functions
-- ✅ Custom hooks
-- ❌ Authentication
-- ❌ Dashboard structure
+**Includes:** UI components, form builder, data tables, `lib/utils.ts`, hooks. No authentication, no dashboard.
 
-**Best for:** Existing Next.js apps, component library only
+## What Gets Created
+
+**Components only:**
+
+```
+components/ui/
+lib/utils.ts
+hooks/
+```
+
+**Auth components:**
+
+```
+proxy.ts
+app/admin/login/
+app/admin/signup/
+app/api/auth/[...all]/route.ts
+lib/auth.ts
+lib/auth-client.ts
+components/login-form.tsx
+components/signup-form.tsx
+components/ui/
+```
+
+**Full panel:**
+
+```
+my-app/
+├── proxy.ts
+├── app/
+│   ├── layout.tsx
+│   ├── page.tsx
+│   ├── admin/
+│   │   ├── layout.tsx
+│   │   ├── login/
+│   │   ├── signup/
+│   │   └── dashboard/
+│   └── api/auth/[...all]/route.ts
+├── components/
+├── lib/
+│   ├── utils.ts
+│   ├── auth.ts
+│   └── auth-client.ts
+├── config/menu.ts
+├── .env / .env.example
+└── package.json
+```
+
+Auth env vars written at init:
+
+```bash
+BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_SECRET=<generated>
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+```
+
+Prisma files (`prisma/schema.prisma`, `lib/prisma.ts`) are added by [`shadpanel db init`](/docs/cli-commands/database), not by `init` itself. Resource generation also emits `lib/prisma.ts` if needed.
 
 ## Merging with Existing Projects
-
-ShadPanel can safely merge into existing Next.js projects:
 
 ```bash
 cd my-existing-nextjs-app
 shadpanel init .
 ```
 
-**Safe Merge Behavior:**
-- ✅ Preserves your existing files
-- ✅ Only adds new ShadPanel files
-- ✅ Prompts before overwriting
-- ✅ Merges `package.json` dependencies
-- ✅ Won't replace your layout/pages
+- Existing files are preserved
+- Only missing ShadPanel files are added
+- Base Next.js template is skipped when merging
+- You are prompted before destructive changes
 
-### Merge Example
-
-```bash
-# You have an existing Next.js app
-cd my-app
-
-# Add ShadPanel components only
-shadpanel init . --components-only
-
-# Your existing files are preserved:
-# ✓ app/page.tsx (your home page)
-# ✓ app/layout.tsx (your layout)
-# ✓ package.json (your dependencies)
-
-# New files added:
-# + components/ui/* (ShadPanel components)
-# + lib/utils.ts (utility functions)
-# + hooks/* (custom hooks)
-```
+See [Merging with Existing Projects](/docs/guides/merging-existing-projects).
 
 ## Interactive Prompts
 
-When you run `shadpanel init` without flags, you'll be prompted for:
+Without flags, `init` asks for:
 
-1. **Project name** (if not provided)
-2. **Package manager** (npm, pnpm, yarn, bun)
-3. **Installation type** (full-panel, auth-components, components-only)
-4. **Authentication** (yes/no)
-5. **Auth providers** (Google, GitHub, Credentials)
-6. **Include demos** (yes/no)
-7. **Initialize git** (yes/no)
+1. Project name (if not provided)
+2. Package manager
+3. Installation type
+4. Authentication (yes/no)
+5. Auth providers
+6. Include demos
+7. Initialize git
 
-### Skip Prompts
-
-Use the `--yes` flag to accept all defaults:
-
-```bash
-shadpanel init my-app --yes
-```
-
-This creates a full panel with:
-- npm as package manager
-- Full panel installation
-- Credentials authentication
-- Demo pages included
-- Git repository initialized
+`--yes` accepts defaults: npm, full panel, credentials auth, demo pages, git enabled.
 
 ## Examples
 
-### Basic Usage
-
 ```bash
-# Create new project with prompts
-shadpanel init my-admin-panel
-
-# Create with pnpm
-shadpanel init my-app --use-pnpm
-
-# Skip prompts, use defaults
 shadpanel init my-app --yes
-```
-
-### Custom Configuration
-
-```bash
-# Full panel with Google OAuth
-shadpanel init my-app --google --credentials
-
-# Components only, no installation
-shadpanel init my-app --components-only --skip-install
-
-# Auth + components with all providers
-shadpanel init my-app --auth-components --google --github --credentials
-```
-
-### Existing Project
-
-```bash
-# Add to existing Next.js app
-cd my-existing-app
+shadpanel init my-app --use-pnpm --google --github --no-demos
 shadpanel init . --components-only
-
-# Add auth to existing app
-cd my-app
 shadpanel init . --auth-components --google
-```
-
-### Advanced
-
-```bash
-# No demos, specific package manager, custom auth
-shadpanel init my-app \
-  --use-pnpm \
-  --no-demos \
-  --google \
-  --github \
-  --disable-git
-
-# Skip everything except components
-shadpanel init my-app \
-  --components-only \
-  --skip-install \
-  --disable-git \
-  --yes
-```
-
-## What Gets Created
-
-### File Structure by Type
-
-**Components Only:**
-```
-my-app/
-├── components/ui/
-├── lib/utils.ts
-├── hooks/
-└── (your existing files preserved)
-```
-
-**Auth Components:**
-```
-my-app/
-├── app/admin/login/
-├── app/admin/signup/
-├── app/api/auth/[...nextauth]/
-├── components/ui/
-├── components/login-form.tsx
-├── components/signup-form.tsx
-├── contexts/
-├── lib/utils.ts
-├── hooks/
-├── types/next-auth.d.ts
-└── .env
-```
-
-**Full Panel:**
-```
-my-app/
-├── app/
-│   ├── admin/dashboard/
-│   ├── admin/login/
-│   ├── admin/signup/
-│   ├── api/auth/
-│   ├── layout.tsx
-│   └── page.tsx
-├── components/
-├── contexts/
-├── hooks/
-├── lib/
-├── config/
-├── types/
-├── .env
-└── package.json
 ```
 
 ## Next Steps
 
-After initialization:
-
-1. **Navigate to project:**
-   ```bash
-   cd my-app
-   ```
-
-2. **Install dependencies** (if skipped):
-   ```bash
-   npm install
-   ```
-
-3. **Set up database** (optional):
-   ```bash
-   shadpanel db init
-   ```
-
-4. **Start development:**
-   ```bash
-   npm run dev
-   ```
+1. `cd my-app` and `npm run dev` (or your package manager)
+2. Optional: [`shadpanel db init`](/docs/cli-commands/database)
+3. Add models, migrate, then [`shadpanel resource <Model>`](/docs/cli-commands/resource)
 
 ## See Also
 
-- [Quick Start](/docs/get-started/quick-start) - Get started guide
-- [Project Structure](/docs/get-started/project-structure) - Understand the structure
-- [Database Commands](/docs/cli-commands/database) - Set up database
-- [Authentication](/docs/features/authentication) - Configure auth providers
+- [Quick Start](/docs/get-started/quick-start)
+- [Project Structure](/docs/get-started/project-structure)
+- [Authentication](/docs/features/authentication)
+- [Database Commands](/docs/cli-commands/database)

@@ -5,13 +5,14 @@ import { Providers } from "@/components/providers"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { StructuredData } from "@/components/structured-data"
+import { SITE_URL } from "@/lib/site"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://shadpanel.vercel.app'),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Shadpanel - Admin Panel CLI for Next.js",
     template: "%s | Shadpanel"
@@ -47,7 +48,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://shadpanel.vercel.app",
+    url: SITE_URL,
     title: "Shadpanel - Admin Panel CLI for Next.js",
     description: "Create complete admin dashboards instantly with Shadpanel. Built with Next.js, shadcn/ui, and Tailwind CSS.",
     siteName: "Shadpanel",

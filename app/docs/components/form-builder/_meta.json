@@ -1,0 +1,11 @@
+{
+  "fields": {
+    "title": "Fields"
+  },
+  "layout": {
+    "title": "Layout"
+  },
+  "validation": {
+    "title": "Validation"
+  }
+}

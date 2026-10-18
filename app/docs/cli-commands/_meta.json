@@ -10,5 +10,9 @@
   "database": {
     "title": "shadpanel db",
     "type": "page"
+  },
+  "resource": {
+    "title": "shadpanel resource",
+    "type": "page"
   }
 }

@@ -6,19 +6,15 @@ import 'nextra-theme-docs/style.css'
 
 export const metadata = {
   title: 'Documentation',
-  description: 'Complete documentation for Shadpanel - Admin Panel CLI',
+  description: 'Complete documentation for Shadpanel CLI 1.6.0 - Next.js 16 admin panels with Better Auth and Prisma.',
 }
 
 export default async function DocsLayout({ children }: {children: React.ReactNode}) {
-  // Get page map - Nextra scans the entire app directory
   const fullPageMap = await getPageMap()
   const year = new Date().getFullYear()
 
-  // Filter to only include items from /docs route
-  // Find the docs entry and use its children if it's a folder, or use it directly
   const docsEntry = fullPageMap.find((item: any) => item.route === '/docs' || item.name === 'docs') as any
 
-  // If docs entry has children (it's a folder), use those. Otherwise, create a filtered map with just docs
   const pageMap = (docsEntry && 'children' in docsEntry && Array.isArray(docsEntry.children))
     ? docsEntry.children
     : [docsEntry].filter(Boolean)
@@ -27,7 +23,12 @@ export default async function DocsLayout({ children }: {children: React.ReactNod
     <Layout
       navbar={<SiteNavbar />}
       pageMap={pageMap}
-      docsRepositoryBase="https://github.com/kristiansnts/shadpanel-docs/tree/main/app/docs"
+      docsRepositoryBase="https://github.com/kristiansnts/shadpanel-docs/tree/main"
+      editLink="Edit this page"
+      feedback={{
+        content: 'Question? Give us feedback →',
+        link: 'https://github.com/kristiansnts/shadpanel/issues',
+      }}
       footer={<Footer>© {year} Shadpanel.</Footer>}
     >
       {children}
